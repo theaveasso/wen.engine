@@ -1,21 +1,11 @@
 ---
-BasedOnStyle: Microsoft
-AllowAllConstructorInitializersOnNextLine: 'true'
+BasedOnStyle: LLVM
 AllowShortCaseLabelsOnASingleLine: 'true'
 AllowShortFunctionsOnASingleLine: InlineOnly
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments:
-  Enabled: true
-AlwaysBreakTemplateDeclarations: 'Yes'
-ColumnLimit: 140
-BinPackArguments: 'false'
-BreakConstructorInitializers: BeforeComma
+AlignConsecutiveDeclarations: 'true'
+AlignConsecutiveAssignments: 'true'
+ColumnLimit: 80
 PointerAlignment: Left
-IndentPPDirectives: AfterHash
 SortIncludes: 'true'
-SpaceBeforeParens: ControlStatements
-SpacesInParentheses: 'false'
-SpacesInSquareBrackets: 'false'
-Standard: Auto
 TabWidth: '2'
 ...
