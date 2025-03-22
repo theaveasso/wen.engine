@@ -1,14 +1,12 @@
-#ifndef __WEN_COMPONENT_GUI_HPP_
-#define __WEN_COMPONENT_GUI_HPP_
+#ifndef WEN_COMPONENT_GUI_HPP_
+#define WEN_COMPONENT_GUI_HPP_
 
 #include "wen/wen_defines.hpp"
 
 #include <flecs.h>
 #include <string>
 
-namespace wen {
-namespace component {
-
+namespace wen::component {
 struct WEN_API_EXPORT GUIComponent {
   std::string title            = "WEN";
   int32_t     width            = 1280;
@@ -20,9 +18,8 @@ struct WEN_API_EXPORT GUIComponent {
 
 class WEN_API_EXPORT GUI {
 public:
-  GUI(flecs::world& world);
+  explicit GUI(flecs::world& world);
 };
-} // namespace component
-} // namespace wen
+} // namespace wen::component
 
-#endif // __WEN_COMPONENT_GUI_HPP_
+#endif // WEN_COMPONENT_GUI_HPP_

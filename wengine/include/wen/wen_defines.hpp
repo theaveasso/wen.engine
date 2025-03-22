@@ -1,8 +1,9 @@
-#pragma once
+#ifndef WEN_DEFINES_HPP_
+#define WEN_DEFINES_HPP_
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define WEN_SYSTEM_MACOS
-#elif defined(__WIN32) || defined(__WIN64)
+#elif defined(_WIN32) || defined(_WIN64)
 #define WEN_SYSTEM_WINDOWS
 #elif defined(__linux__)
 #define WEN_SYSTEM_LINUX
@@ -17,7 +18,9 @@
 #elif defined(WEN_SYSTEM_WINDOWS)
 #define WEN_API_EXPORT __declspec(dllexport)
 #define WEN_API_IMPORT __declspec(dllimport)
+#else
 #error "System not support"
+#endif
 #else
 #define WEN_API_EXPORT
 #define WEN_API_IMPORT
@@ -40,4 +43,4 @@ using Color = SDL_Color;
 
 } // namespace wen
 
-#endif // __WE_DEFINES_HPP_
+#endif // WE_DEFINES_HPP_

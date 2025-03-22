@@ -11,7 +11,7 @@ using namespace wen::component;
 
 internal void CreateSDLRenderer(entity e, WindowComponent& window_comp,
                                 SDL_RendererComponent& renderer_comp) {
-  auto renderer = SDL_CreateRenderer(window_comp.window, 0);
+  auto renderer = SDL_CreateRenderer(window_comp.window, nullptr);
   if (renderer == nullptr) {
     std::cout << "failed CreateSDLRenderer" << std::endl;
     return;

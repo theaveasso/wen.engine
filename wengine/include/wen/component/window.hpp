@@ -1,13 +1,12 @@
-#ifndef __WEN_COMPONENT_WINDOW_HPP_
-#define __WEN_COMPONENT_WINDOW_HPP_
+#ifndef WEN_COMPONENT_WINDOW_HPP_
+#define WEN_COMPONENT_WINDOW_HPP_
 
 #include <SDL3/SDL.h>
 #include <flecs.h>
 
 #include "wen/wen_defines.hpp"
 
-namespace wen {
-namespace component {
+namespace wen::component {
 struct WEN_API_EXPORT WindowComponent {
   SDL_Window* window = nullptr;
   int32_t     width  = 1280;
@@ -19,9 +18,9 @@ struct WEN_API_EXPORT WindowComponent {
 
 class WEN_API_EXPORT Window {
 public:
-  Window(flecs::world& world);
+  explicit Window(flecs::world& world);
 };
-} // namespace component
-} // namespace wen
+} // namespace wen::component
 
-#endif // __WEN_COMPONENT_WINDOW_HPP_
+
+#endif // WEN_COMPONENT_WINDOW_HPP_

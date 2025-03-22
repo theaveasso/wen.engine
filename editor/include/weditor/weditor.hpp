@@ -1,0 +1,4 @@
+#ifndef WEDITOR_WEDITOR_HPP_
+#define WEDITOR_WEDITOR_HPP_
+
+#endif // WEDITOR_WEDITOR_HPP_

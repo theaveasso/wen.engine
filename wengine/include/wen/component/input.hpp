@@ -1,13 +1,12 @@
-#ifndef __WEN_COMPONENT_INPUT_HPP_
-#define __WEN_COMPONENT_INPUT_HPP_
+#ifndef WEN_COMPONENT_INPUT_HPP_
+#define WEN_COMPONENT_INPUT_HPP_
 
 #include <flecs.h>
 #include <SDL3/SDL.h>
 
 #include "wen/wen_defines.hpp"
 
-namespace wen {
-namespace component {
+namespace wen::component {
 struct WEN_API_EXPORT KeyStateComponent {
   bool is_pressed = false;
   bool state      = false;
@@ -44,7 +43,6 @@ class WEN_API_EXPORT Input {
 public:
   explicit Input(flecs::world& world);
 };
-} // namespace component
-} // namespace wen
+} // namespace wen::component
 
-#endif // __WEN_COMPONENT_INPUT_HPP_
+#endif // WEN_COMPONENT_INPUT_HPP_

@@ -1,14 +1,13 @@
-#ifndef __WEN_SYSTEM_INPUT_HPP_
-#define __WEN_SYSTEM_INPUT_HPP_
+#ifndef WEN_SYSTEM_INPUT_HPP_
+#define WEN_SYSTEM_INPUT_HPP_
 
 #include <flecs.h>
 
 #include "wen/component/input.hpp"
 
-namespace wen {
-namespace system {
+namespace wen::system {
 void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp);
-} // namespace system
-} // namespace wen
+} // namespace wen::system
 
-#endif // __WEN_SYSTEM_INPUT_HPP_
+
+#endif // WEN_SYSTEM_INPUT_HPP_

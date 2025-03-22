@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28.1)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+#
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -18,8 +18,10 @@ set(PROJECT_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(FetchContent)
 
-add_subdirectory(thirdparty/sdl3)
-add_subdirectory(thirdparty/flecs)
+add_subdirectory(thirdparty/sdl3 EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty/flecs EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty/imgui)
     
 add_subdirectory(wengine)
+add_subdirectory(editor)
 add_subdirectory(sandbox)

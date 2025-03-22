@@ -1,5 +1,5 @@
-#ifndef __WEN_HPP_
-#define __WEN_HPP_
+#ifndef WEN_HPP_
+#define WEN_HPP_
 
 #include <flecs.h>
 
@@ -21,4 +21,4 @@ extern "C" {
 }
 #endif // __cplusplus
 
-#endif
+#endif // WEN_HPP_
