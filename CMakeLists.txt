@@ -18,10 +18,11 @@ set(PROJECT_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(FetchContent)
 
+add_subdirectory(thirdparty/glm EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/sdl3 EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/flecs EXCLUDE_FROM_ALL)
-add_subdirectory(thirdparty/imgui)
-    
+add_subdirectory(thirdparty/imgui EXCLUDE_FROM_ALL)
+
 add_subdirectory(wengine)
 add_subdirectory(editor)
 add_subdirectory(sandbox)

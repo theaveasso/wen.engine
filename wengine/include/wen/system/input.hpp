@@ -8,6 +8,4 @@
 namespace wen::system {
 void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp);
 } // namespace wen::system
-
-
 #endif // WEN_SYSTEM_INPUT_HPP_

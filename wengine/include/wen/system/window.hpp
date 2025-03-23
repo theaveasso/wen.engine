@@ -5,7 +5,6 @@
 
 #include "wen/wen_defines.hpp"
 
-
 namespace wen::system {
 class WEN_API_EXPORT WindowSystem {
 public:

@@ -9,12 +9,18 @@ set(WEN_SOURCES ${SOURCES} ${HEADERS})
 add_library(${PROJECT_NAME} SHARED ${WEN_SOURCES})
 
 target_include_directories(
-    ${PROJECT_NAME} PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/flecs
+        ${PROJECT_NAME} PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/flecs
+        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/imgui
+        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/glm
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 flecs )
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 imgui)
+target_link_libraries(${PROJECT_NAME} PUBLIC  flecs glm)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
+if (NOT MSVC)
 target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
+endif ()

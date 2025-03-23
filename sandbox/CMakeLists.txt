@@ -16,4 +16,4 @@ include_directories("include")
 
 add_executable(${PROJECT_NAME} ${WEN_SOURCES})
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE wen_engine flecs SDL3::SDL3)
+target_link_libraries("${PROJECT_NAME}" PRIVATE wen_engine flecs SDL3::SDL3 imgui)

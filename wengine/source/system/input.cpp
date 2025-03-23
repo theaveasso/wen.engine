@@ -1,7 +1,9 @@
-#include <SDL3/SDL.h>
-#include <iostream>
-
 #include "wen/system/input.hpp"
+
+#include <SDL3/SDL.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <imgui.h>
+#include <iostream>
 
 #include "wen/component/input.hpp"
 
@@ -22,8 +24,7 @@ static void OnKeyReset(component::KeyStateComponent& key_state) {
 }
 
 void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp) {
-  for (int k = 0; k < 256; k++) {
-    component::KeyStateComponent key = comp.keys[k];
+  for (auto key : comp.keys) {
     OnKeyReset(key);
   }
   OnKeyReset(comp.mouse_state.left);
@@ -31,8 +32,11 @@ void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp) {
 
   SDL_Event event{};
   while (SDL_PollEvent(&event)) {
+    ImGui_ImplSDL3_ProcessEvent(&event);
     switch (event.type) {
-    case SDL_EVENT_QUIT: it.world().quit(); break;
+    case SDL_EVENT_QUIT:
+      it.world().quit();
+      break;
     case SDL_EVENT_KEY_DOWN: std::cout << "key down" << "\n"; break;
     case SDL_EVENT_KEY_UP: std::cout << "key Up" << "\n"; break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:

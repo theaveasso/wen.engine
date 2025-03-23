@@ -24,8 +24,10 @@ int main(int /* argc */, char** /* argv */) {
 void init_component(flecs::world& world) {
   world.component<system::Engine>()
       .emplace<component::GUIComponent>()
+      .emplace<component::InputComponent>()
       .emplace<component::WindowComponent>(600, 800)
-      .emplace<component::SDL_RendererComponent>();
+      .emplace<component::SDL_RendererComponent>()
+      .emplace<component::ImGui_GFXComponent>();
 }
 
 void init_game(flecs::world& world) {

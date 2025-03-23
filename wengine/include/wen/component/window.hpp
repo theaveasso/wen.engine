@@ -9,11 +9,10 @@
 namespace wen::component {
 struct WEN_API_EXPORT WindowComponent {
   SDL_Window* window = nullptr;
-  int32_t     width  = 1280;
-  int32_t     height = 720;
+  int         width  = 1280;
+  int         height = 720;
 
-  WindowComponent() = default;
-  WindowComponent(int32_t w, int32_t h) : width(w), height(h) {};
+  WindowComponent(int w, int h) : width(w), height(h) {}
 };
 
 class WEN_API_EXPORT Window {
@@ -21,6 +20,5 @@ public:
   explicit Window(flecs::world& world);
 };
 } // namespace wen::component
-
 
 #endif // WEN_COMPONENT_WINDOW_HPP_
