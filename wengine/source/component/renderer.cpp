@@ -1,10 +1,9 @@
 #include "wen/component/renderer.hpp"
 
 namespace wen::component {
-SDL_Renderer::SDL_Renderer(flecs::world& world) {
-  world.module<SDL_Renderer>();
+RendererComponent::RendererComponent(flecs::world& world) {
+  world.module<RendererComponent>();
 
-  world.component<SDL_RendererComponent>().member(
-      "render_type", &SDL_RendererComponent::renderer_type);
+  world.component<GPUShader>();
 }
 } // namespace wen::component

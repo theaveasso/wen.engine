@@ -3,14 +3,19 @@
 
 #include <flecs.h>
 
-#include "wen/wen_defines.hpp"
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 namespace wen::system {
-class WEN_API_EXPORT SDL_RendererSystem {
+class RendererSystem {
 public:
-  explicit SDL_RendererSystem(flecs::world& world);
+  RendererSystem(flecs::world& world);
 };
 } // namespace wen::system
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif // WEN_SYSTEM_RENDERER_HPP_

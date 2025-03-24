@@ -5,7 +5,6 @@ void init_component(flecs::world& world);
 int main(int /* argc */, char** /* argv */) {
   flecs::world world;
 
-  world.import <wen::component::Transform>();
   world.import <wen::system::Engine>();
 
   init_component(world);

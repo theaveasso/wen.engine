@@ -4,23 +4,21 @@
 
 #include "wen/component/gui.hpp"
 #include "wen/component/input.hpp"
-#include "wen/component/renderer.hpp"
 
 #include "wen/system/imgui_gfx.hpp"
 #include "wen/system/input.hpp"
-#include "wen/system/renderer.hpp"
-#include "wen/system/window.hpp"
 #include "wen/system/gui.hpp"
 
-
 namespace wen::system {
+static flecs::query on_input;
+
 static void OnDestroy(ecs_world_t* world, void* ctx) {
-  ////// TODO: Stop everything here
   SDL_Quit();
-  std::cout << "wen engine shutdown ..." << std::endl;
 };
 
 Engine::Engine(flecs::world& world) {
+  world.module<Engine>();
+
   world.import <component::Input>();
 
   world.import <system::GUISystem>();
