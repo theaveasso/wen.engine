@@ -5,9 +5,9 @@
 #include "wen/component/gui.hpp"
 #include "wen/component/input.hpp"
 
+#include "wen/system/gui.hpp"
 #include "wen/system/imgui_gfx.hpp"
 #include "wen/system/input.hpp"
-#include "wen/system/gui.hpp"
 
 namespace wen::system {
 static flecs::query on_input;
@@ -18,19 +18,34 @@ static void OnDestroy(ecs_world_t* world, void* ctx) {
 
 Engine::Engine(flecs::world& world) {
   world.module<Engine>();
-
-  world.import <component::Input>();
-
+  world.import <component::InputComponent>();
   world.import <system::GUISystem>();
 
-  world.system<component::InputComponent>("InputSystem")
-      .kind(flecs::PostLoad)
-      .each(ProcessEvent);
+  struct OnBeginFrame {};
+  struct OnEndFrame {};
+  struct OnDraw {};
 
-  world.atfini(OnDestroy);
+  auto run_on_begin_frame = world.query<OnBeginFrame>();
+  auto run_on_draw        = world.query<OnDraw>();
+  auto run_on_end_frame   = world.query<OnEndFrame>();
 
-  if (!SDL_Init(SDL_INIT_VIDEO)) {
-    return;
-  }
+  run_on_begin_frame.run([](flecs::iter& it) {
+    while(it.next()) {
+      for (auto i : it) {
+
+      }
+    }
+  });
+
+
+//  world.system<component::InputComponent>("InputSystem")
+//      .kind(flecs::PostLoad)
+//      .each(ProcessEvent);
+//
+//  world.atfini(OnDestroy);
+//
+//  if (!SDL_Init(SDL_INIT_VIDEO)) {
+//    return;
+//  }
 } // namespace system
 } // namespace wen::system

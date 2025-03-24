@@ -1,9 +1,9 @@
 #include "wen/component/input.hpp"
 
 namespace wen::component {
-Input::Input(flecs::world& world) {
+InputComponent::InputComponent(flecs::world& world) {
   world.module<Input>();
 
-  world.add<InputComponent>();
+  world.add<Input>();
 }
 } // namespace wen::component

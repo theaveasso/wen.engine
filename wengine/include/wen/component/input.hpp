@@ -32,16 +32,16 @@ struct WEN_API_EXPORT MouseStateComponent {
   MouseStateComponent() = default;
 };
 
-struct WEN_API_EXPORT InputComponent {
+struct WEN_API_EXPORT Input{
   KeyStateComponent   keys[256];
   MouseStateComponent mouse_state;
 
-  InputComponent() = default;
+  Input() = default;
 };
 
-class WEN_API_EXPORT Input {
+class WEN_API_EXPORT InputComponent {
 public:
-  explicit Input(flecs::world& world);
+  explicit InputComponent(flecs::world& world);
 };
 } // namespace wen::component
 

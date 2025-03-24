@@ -14,9 +14,9 @@ static void BeginFrame(flecs::iter it, size_t i, component::FrameData& comp) {
 
   auto gui = it.world().get<component::GUI>();
 
-  SDL_GPUColorTargetDescription color_target_desc[1] = {{
-      .format = SDL_GetGPUSwapchainTextureFormat(gui->renderer.device, gui->window.window)
-  }};
+  SDL_GPUColorTargetDescription color_target_desc[1] = {
+      {.format = SDL_GetGPUSwapchainTextureFormat(gui->renderer.device,
+                                                  gui->window.window)}};
 
   SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {
       .vertex_shader   = vert_shader,
@@ -25,7 +25,7 @@ static void BeginFrame(flecs::iter it, size_t i, component::FrameData& comp) {
       .target_info =
           {
               .color_target_descriptions = color_target_desc,
-              .num_color_targets = 1,
+              .num_color_targets         = 1,
           },
   };
 
@@ -78,15 +78,23 @@ static void EndFrame(flecs::entity e, component::FrameData& comp) {
 RendererSystem::RendererSystem(flecs::world& world) {
   world.module<RendererSystem>();
 
-  world.entity("OnBeginFrame");
-  world.entity("OnEndFrame");
-
   world.import <component::RendererComponent>();
 
   world.observer<component::FrameData>().event(flecs::OnSet).each(BeginFrame);
+  flecs::entity on_begin_frame_pipeline = world.pipeline()
+                                        .with(flecs::System)
+                                        .with(component::OnBeginFrame)
+                                        .build();
+  world.set_pipeline(on_begin_frame_pipeline);
 
-  world.system<component::FrameData>().kind(flecs::OnUpdate).each(BeginFrame);
+  flecs::entity on_end_frame_pipeline = world.pipeline()
+      .with(flecs::System)
+      .with(component::OnEndFrame)
+      .build();
+  world.set_pipeline(on_end_frame_pipeline);
 
-  world.system<component::FrameData>().kind(flecs::OnUpdate).each(EndFrame);
+  world.system<component::FrameData>().kind(on_begin_frame_pipeline).each(BeginFrame);
+  //
+  //  world.system<component::FrameData>().kind().each(EndFrame);
 }
 } // namespace wen::system
