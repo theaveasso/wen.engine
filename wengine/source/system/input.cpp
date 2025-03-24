@@ -32,7 +32,6 @@ void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp) {
 
   SDL_Event event{};
   while (SDL_PollEvent(&event)) {
-    ImGui_ImplSDL3_ProcessEvent(&event);
     switch (event.type) {
     case SDL_EVENT_QUIT:
       it.world().quit();

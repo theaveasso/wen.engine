@@ -12,6 +12,7 @@
 
 #include "wen/component/input.hpp"
 #include "wen/system/engine.hpp"
+#include "wen/system/gui.hpp"
 #include "wen/system/imgui_gfx.hpp"
 #include "wen/system/renderer.hpp"
 #include "wen/system/window.hpp"

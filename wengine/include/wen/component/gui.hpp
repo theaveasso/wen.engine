@@ -7,18 +7,31 @@
 #include <string>
 
 namespace wen::component {
-struct WEN_API_EXPORT GUIComponent {
-  std::string title            = "WEN";
-  int32_t     width            = 1280;
-  int32_t     height           = 720;
-  Color       background_color = {255, 255, 255, 255};
-
-  GUIComponent() = default;
+struct WindowConfig {
+  int         width  = 1280;
+  int         height = 720;
+  std::string title  = "WEN";
 };
 
-class WEN_API_EXPORT GUI {
+struct Window {
+  SDL_Window* window = nullptr;
+};
+
+struct Renderer {
+  SDL_GPUDevice* device = nullptr;
+};
+
+struct WEN_API_EXPORT GUI {
+  WindowConfig config;
+  Window       window;
+  Renderer     renderer;
+
+  GUI() = default;
+};
+
+class GUIComponent {
 public:
-  explicit GUI(flecs::world& world);
+  explicit GUIComponent(flecs::world& world);
 };
 } // namespace wen::component
 

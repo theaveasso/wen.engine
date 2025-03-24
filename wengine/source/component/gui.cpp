@@ -1,9 +1,9 @@
 #include "wen/component/gui.hpp"
 
 namespace wen::component {
-GUI::GUI(flecs::world& world) {
-  world.module<GUI>();
+GUIComponent::GUIComponent(flecs::world& world) {
+  world.module<GUIComponent>();
 
-  world.component<GUIComponent>();
+  world.component<GUI>();
 }
 } // namespace wen::component

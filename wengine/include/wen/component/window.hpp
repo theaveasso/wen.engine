@@ -15,10 +15,10 @@ struct WEN_API_EXPORT WindowComponent {
   WindowComponent(int w, int h) : width(w), height(h) {}
 };
 
-class WEN_API_EXPORT Window {
-public:
-  explicit Window(flecs::world& world);
-};
+//class WEN_API_EXPORT Window {
+//public:
+//  explicit Window(flecs::world& world);
+//};
 } // namespace wen::component
 
 #endif // WEN_COMPONENT_WINDOW_HPP_
