@@ -38,9 +38,6 @@ using std::shared_ptr;
 namespace wen {
 using Color = SDL_Color;
 
-#define internal static
-#define global_var static
-
 } // namespace wen
 
 #endif // WE_DEFINES_HPP_

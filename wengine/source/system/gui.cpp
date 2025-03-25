@@ -1,7 +1,5 @@
 #include "wen/system/gui.hpp"
 
-#include <iostream>
-
 #include "wen/component/gui.hpp"
 
 namespace wen::system {

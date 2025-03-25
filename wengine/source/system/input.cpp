@@ -23,7 +23,7 @@ static void OnKeyReset(component::KeyStateComponent& key_state) {
   }
 }
 
-void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp) {
+void ProcessEvent(flecs::iter& it, size_t i, component::Input& comp) {
   for (auto key : comp.keys) {
     OnKeyReset(key);
   }

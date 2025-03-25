@@ -16,6 +16,6 @@ int main(int /* argc */, char** /* argv */) {
 
 void init_component(flecs::world& world) {
   world.component<wen::system::Engine>()
-      .emplace<wen::component::InputComponent>()
+      .emplace<wen::component::Input>()
       .emplace<wen::component::GUI>();
 }

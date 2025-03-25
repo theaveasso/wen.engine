@@ -80,21 +80,19 @@ RendererSystem::RendererSystem(flecs::world& world) {
 
   world.import <component::RendererComponent>();
 
-  world.observer<component::FrameData>().event(flecs::OnSet).each(BeginFrame);
-  flecs::entity on_begin_frame_pipeline = world.pipeline()
-                                        .with(flecs::System)
-                                        .with(component::OnBeginFrame)
-                                        .build();
-  world.set_pipeline(on_begin_frame_pipeline);
-
-  flecs::entity on_end_frame_pipeline = world.pipeline()
-      .with(flecs::System)
-      .with(component::OnEndFrame)
-      .build();
-  world.set_pipeline(on_end_frame_pipeline);
-
-  world.system<component::FrameData>().kind(on_begin_frame_pipeline).each(BeginFrame);
+  // world.observer<component::FrameData>().event(flecs::OnSet).each(BeginFrame);
+  // flecs::entity on_begin_frame_pipeline = world.pipeline()
+  //                                       .with(flecs::System)
+  //                                       .with(component::OnBeginFrame)
+  //                                       .build();
+  // world.set_pipeline(on_begin_frame_pipeline);
   //
-  //  world.system<component::FrameData>().kind().each(EndFrame);
+  // flecs::entity on_end_frame_pipeline = world.pipeline()
+  //     .with(flecs::System)
+  //     .with(component::OnEndFrame)
+  //     .build();
+  // world.set_pipeline(on_end_frame_pipeline);
+  //
+  // world.system<component::FrameData>().kind(on_begin_frame_pipeline).each(BeginFrame);
 }
 } // namespace wen::system

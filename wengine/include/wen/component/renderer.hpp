@@ -12,17 +12,9 @@ extern "C" {
 
 namespace wen::component {
 
-flecs::entity_t OnBeginFrame;
-flecs::entity_t OnEndFrame;
-flecs::entity_t OnDraw;
-
-struct OnDraw {
-  std::byte _;
-};
-
-struct OnEndFrame {
-  std::byte _;
-};
+extern flecs::entity_t OnBeginFrame;
+extern flecs::entity_t OnEndFrame;
+extern flecs::entity_t OnDraw;
 
 struct GPUShader {
   Uint32         sampler_count;

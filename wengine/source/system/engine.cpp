@@ -21,31 +21,14 @@ Engine::Engine(flecs::world& world) {
   world.import <component::InputComponent>();
   world.import <system::GUISystem>();
 
-  struct OnBeginFrame {};
-  struct OnEndFrame {};
-  struct OnDraw {};
+ world.system<component::Input>("InputSystem")
+     .kind(flecs::PostLoad)
+     .each(ProcessEvent);
 
-  auto run_on_begin_frame = world.query<OnBeginFrame>();
-  auto run_on_draw        = world.query<OnDraw>();
-  auto run_on_end_frame   = world.query<OnEndFrame>();
+ world.atfini(OnDestroy);
 
-  run_on_begin_frame.run([](flecs::iter& it) {
-    while(it.next()) {
-      for (auto i : it) {
-
-      }
-    }
-  });
-
-
-//  world.system<component::InputComponent>("InputSystem")
-//      .kind(flecs::PostLoad)
-//      .each(ProcessEvent);
-//
-//  world.atfini(OnDestroy);
-//
-//  if (!SDL_Init(SDL_INIT_VIDEO)) {
-//    return;
-//  }
+ if (!SDL_Init(SDL_INIT_VIDEO)) {
+   return;
+ }
 } // namespace system
 } // namespace wen::system

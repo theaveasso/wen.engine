@@ -6,6 +6,6 @@
 #include "wen/component/input.hpp"
 
 namespace wen::system {
-void ProcessEvent(flecs::iter& it, size_t i, component::InputComponent& comp);
+void ProcessEvent(flecs::iter& it, size_t i, component::Input& comp);
 } // namespace wen::system
 #endif // WEN_SYSTEM_INPUT_HPP_
