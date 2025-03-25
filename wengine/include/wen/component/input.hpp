@@ -1,8 +1,8 @@
 #ifndef WEN_COMPONENT_INPUT_HPP_
 #define WEN_COMPONENT_INPUT_HPP_
 
-#include <flecs.h>
 #include <SDL3/SDL.h>
+#include <flecs.h>
 
 #include "wen/wen_defines.hpp"
 
@@ -11,15 +11,11 @@ struct WEN_API_EXPORT KeyStateComponent {
   bool is_pressed = false;
   bool state      = false;
   bool current    = false;
-
-  KeyStateComponent() = default;
 };
 
 struct WEN_API_EXPORT MouseCoordComponent {
   float x = 0;
   float y = 0;
-
-  MouseCoordComponent() = default;
 };
 
 struct WEN_API_EXPORT MouseStateComponent {
@@ -28,15 +24,16 @@ struct WEN_API_EXPORT MouseStateComponent {
   KeyStateComponent wnd;
   KeyStateComponent rel;
   KeyStateComponent view;
-
-  MouseStateComponent() = default;
 };
 
-struct WEN_API_EXPORT Input{
-  KeyStateComponent   keys[256];
+struct WEN_API_EXPORT Input {
+  KeyStateComponent   keys[SDL_SCANCODE_COUNT];
   MouseStateComponent mouse_state;
+};
 
-  Input() = default;
+struct WEN_API_EXPORT InputMapping {
+  flecs::entity_t action;
+  int             key;
 };
 
 class WEN_API_EXPORT InputComponent {

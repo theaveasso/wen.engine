@@ -75,24 +75,85 @@ static void EndFrame(flecs::entity e, component::FrameData& comp) {
   SDL_SubmitGPUCommandBuffer(comp.command_buffer);
 }
 
+static void LoadGPUShader(flecs::iter& it, size_t i,
+                          component::GPUShader& shader_comp) {
+  auto gui = it.world().get<component::GUI>();
+  assert(gui && "null gui component");
+
+  SDL_GPUShaderStage stage;
+  if (SDL_strstr(shader_comp.filename, ".vert")) {
+    stage = SDL_GPU_SHADERSTAGE_VERTEX;
+  } else if (SDL_strstr(shader_comp.filename, ".frag")) {
+    stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+  } else {
+    assert("failed invalid shader stage!");
+    return;
+  }
+
+  std::string fullpath;
+  const char* entrypoint;
+
+  SDL_GPUShaderFormat backend_fmt =
+      SDL_GetGPUShaderFormats(gui->renderer.device);
+  SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
+
+  auto base_path = SDL_GetBasePath();
+  if (backend_fmt & SDL_GPU_SHADERFORMAT_SPIRV) {
+    fullpath = std::string(base_path) + "etc/shaders/compiled/spirv/" + std::string(shader_comp.filename) + ".spirv";
+    entrypoint = "main";
+    format     = SDL_GPU_SHADERFORMAT_SPIRV;
+  } else if (backend_fmt & SDL_GPU_SHADERFORMAT_MSL) {
+    fullpath = std::string(base_path) + "etc/shaders/compiled/msl/" + std::string(shader_comp.filename) + ".msl";
+    format     = SDL_GPU_SHADERFORMAT_MSL;
+    entrypoint = "main0";
+  } else if (backend_fmt & SDL_GPU_SHADERFORMAT_DXIL) {
+    fullpath = std::string(base_path) + "etc/shaders/compiled/dxil/" + std::string(shader_comp.filename) + ".dxil";
+    format     = SDL_GPU_SHADERFORMAT_DXIL;
+    entrypoint = "main";
+  } else {
+    assert("failed unrecognized backend shader format");
+    return;
+  }
+
+  size_t code_size;
+  void*  code = SDL_LoadFile(fullpath.c_str(), &code_size);
+  if (!code) {
+    assert("failed SDL_LoadFile");
+    return;
+  }
+
+  SDL_GPUShaderCreateInfo shader_info = {
+      .code_size    = code_size,
+      .code         = static_cast<const Uint8*>(code),
+      .entrypoint   = entrypoint,
+      .format       = format,
+      .stage        = stage,
+      .num_samplers = static_cast<Uint32>(shader_comp.sampler_count),
+      .num_storage_textures =
+          static_cast<Uint32>(shader_comp.storage_texture_count),
+      .num_storage_buffers =
+          static_cast<Uint32>(shader_comp.storage_buffer_count),
+      .num_uniform_buffers =
+          static_cast<Uint32>(shader_comp.uniform_buffer_count),
+  };
+
+  shader_comp.shader = SDL_CreateGPUShader(gui->renderer.device, &shader_info);
+  if (!shader_comp.shader) {
+    assert(shader_comp.shader && "failed SDL_CreateGPUShader");
+    SDL_free(code);
+    return;
+  }
+
+  SDL_free(code);
+}
+
 RendererSystem::RendererSystem(flecs::world& world) {
   world.module<RendererSystem>();
 
   world.import <component::RendererComponent>();
 
-  // world.observer<component::FrameData>().event(flecs::OnSet).each(BeginFrame);
-  // flecs::entity on_begin_frame_pipeline = world.pipeline()
-  //                                       .with(flecs::System)
-  //                                       .with(component::OnBeginFrame)
-  //                                       .build();
-  // world.set_pipeline(on_begin_frame_pipeline);
-  //
-  // flecs::entity on_end_frame_pipeline = world.pipeline()
-  //     .with(flecs::System)
-  //     .with(component::OnEndFrame)
-  //     .build();
-  // world.set_pipeline(on_end_frame_pipeline);
-  //
-  // world.system<component::FrameData>().kind(on_begin_frame_pipeline).each(BeginFrame);
+  world.observer<component::GPUShader>()
+      .event(flecs::OnSet)
+      .each(LoadGPUShader);
 }
 } // namespace wen::system

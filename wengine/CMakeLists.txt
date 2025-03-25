@@ -24,3 +24,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 if (NOT MSVC)
 target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 endif ()
+
+set(ASSET_SRC_DIR "${CMAKE_SOURCE_DIR}/etc")
+set(ASSET_DST_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/etc")
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${ASSET_SRC_DIR} ${ASSET_DST_DIR}
+    COMMENT "Copying shader assets to bin folder..."
+)
+

@@ -40,4 +40,4 @@ using Color = SDL_Color;
 
 } // namespace wen
 
-#endif // WE_DEFINES_HPP_
+#endif // WEN_DEFINES_HPP_

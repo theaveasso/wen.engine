@@ -2,8 +2,9 @@
 
 namespace wen::component {
 InputComponent::InputComponent(flecs::world& world) {
-  world.module<Input>();
+  world.module<InputComponent>();
 
-  world.add<Input>();
+  world.component<Input>();
+  world.component<InputMapping>();
 }
 } // namespace wen::component

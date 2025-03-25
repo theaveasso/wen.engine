@@ -3,6 +3,7 @@
 
 #include <flecs.h>
 
+
 #include "wen/component/gui.hpp"
 #include "wen/component/imgui_gfx.hpp"
 #include "wen/component/input.hpp"
@@ -11,6 +12,8 @@
 #include "wen/system/engine.hpp"
 #include "wen/system/gui.hpp"
 #include "wen/system/imgui_gfx.hpp"
+
+#include "wen_engine.hpp"
 
 #ifdef __cplusplus
 extern "C" {

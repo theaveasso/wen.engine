@@ -1,14 +1,8 @@
 #ifndef WEN_COMPONENT_RENDERER_HPP_
 #define WEN_COMPONENT_RENDERER_HPP_
 
-#include "wen/wen_defines.hpp"
-
+#include <SDL3/SDL.h>
 #include <flecs.h>
-#include <string>
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 namespace wen::component {
 
@@ -17,12 +11,16 @@ extern flecs::entity_t OnEndFrame;
 extern flecs::entity_t OnDraw;
 
 struct GPUShader {
-  Uint32         sampler_count;
-  Uint32         uniform_buffer_count;
-  Uint32         storage_buffer_count;
-  Uint32         storage_texture_count;
-  std::string    filename;
+  int            sampler_count;
+  int            uniform_buffer_count;
+  int            storage_buffer_count;
+  int            storage_texture_count;
+  const char*    filename;
   SDL_GPUShader* shader;
+
+  GPUShader(const char* filename_, int sampler_count_,
+            int uniform_buffer_count_, int storage_buffer_count_,
+            int storage_texture_count_);
 };
 
 struct FrameData {
@@ -40,9 +38,5 @@ public:
   explicit RendererComponent(flecs::world& world);
 };
 } // namespace wen::component
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // WEN_COMPONENT_RENDERER_HPP_

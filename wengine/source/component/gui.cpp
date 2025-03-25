@@ -14,7 +14,7 @@ GUI::GUI(int width_, int height_, std::string_view title_)
 GUIComponent::GUIComponent(flecs::world& world) {
   world.module<GUIComponent>();
 
-  world.component<GUI>();
+  world.component<GUI>("WEN::GUI");
 }
 
 } // namespace wen::component
