@@ -1,13 +1,19 @@
 #include "wen/wen_engine.hpp"
 
-#include <iostream>
+#include "wen/wen.hpp"
 
 #include "wen/component/wen_pipeline_phase.hpp"
+#include "wen/component/wen_window.hpp"
+#include "wen/component/wen_renderer.hpp"
+
+#include "wen/system/wen_window.hpp"
+#include "wen/system/wen_renderer.hpp"
 
 namespace wen {
 
-static void OnDestroy(ecs_world_t* world, void* ctx) {
-  SDL_Quit();
+static void ShutdownEngine(ecs_world_t* world, void* ctx) {
+  auto window = ecs_lookup(world, WEN_WINDOW);
+  ecs_clear(world, window);
 };
 
 engine::engine() : m_engine(make_unique<flecs::world>()) {
@@ -18,6 +24,10 @@ engine::engine() : m_engine(make_unique<flecs::world>()) {
   }
 }
 
+engine::~engine() {
+  SDL_Quit();
+}
+
 bool engine::initialize() {
   bool init_ok = SDL_Init(SDL_INIT_VIDEO);
   if (!init_ok) {
@@ -25,7 +35,10 @@ bool engine::initialize() {
     return false;
   }
 
-  m_engine->import <component::PhaseComponent>();
+  m_engine->import <component::PipelinePhaseComponent>();
+
+  m_engine->import <system::WindowSystem>();
+  m_engine->import <system::RendererSystem>();
 
   m_on_process_event_q = create_query<component::OnProcessEvent>();
   m_on_draw_q          = create_query<component::OnDraw>();
@@ -39,21 +52,19 @@ bool engine::initialize() {
   auto on_begin_draw_phase    = m_engine->entity<component::OnBeginDraw>();
   auto on_end_draw_phase      = m_engine->entity<component::OnEndDraw>();
 
-  auto ccc = m_engine->entity();
-  ccc.add<position>();
+  auto app = m_engine->entity(WEN_APP);
 
-  m_engine->system<position>()
-      .kind(on_process_event_phase)
-      .run([](flecs::iter& it) {
-        while (it.next()) {
-          std::cout << "system - draw" << std::endl;
-        }
-      });
+  app.emplace<component::WindowConfig>(1280, 720);
+  app.add<component::Renderer>();
 
   return true;
 }
 
 void engine::run() {
-  m_engine->progress();
+  // m_engine->atfini(ShutdownEngine);
+
+  while (!m_engine->should_quit()) {
+    m_engine->progress();
+  }
 }
 } // namespace wen

@@ -14,7 +14,7 @@ struct velocity {};
 class WEN_API_EXPORT engine {
 public:
   engine();
-  ~engine() = default;
+  ~engine();
 
   bool initialize();
   void run();
