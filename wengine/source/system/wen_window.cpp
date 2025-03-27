@@ -26,17 +26,6 @@ static void ShutdownWindow(flecs::entity e, component::Window& c) {
   SDL_DestroyWindow(window->window);
 }
 
-static void UpdateWindow(flecs::iter& it) {
-  while (it.next()) {
-    SDL_Event event{};
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_EVENT_QUIT) {
-        it.world().quit();
-      }
-    }
-  }
-}
-
 WindowSystem::WindowSystem(flecs::world& world) {
   world.module<WindowSystem>();
 
@@ -47,7 +36,5 @@ WindowSystem::WindowSystem(flecs::world& world) {
   world.observer<component::Window>()
       .event(flecs::OnRemove)
       .each(ShutdownWindow);
-
-  world.system<>().kind(flecs::OnUpdate).run(UpdateWindow);
 }
 } // namespace wen::system
