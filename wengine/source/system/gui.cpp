@@ -1,10 +1,13 @@
 #include "wen/system/gui.hpp"
 
+#include <iostream>
+
 #include "wen/component/gui.hpp"
 
 namespace wen::system {
-static void GUIInitialize([[maybe_unused]] flecs::entity e,
-                          component::GUI&                comp) {
+static void GUIInitialize(flecs::entity, component::GUI& comp) {
+  std::cout << "init gui" << "\n";
+
   comp.window.window = SDL_CreateWindow(
       comp.config.title.c_str(), comp.config.width, comp.config.height,
       SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
@@ -45,10 +48,9 @@ static void GUIShutdown([[maybe_unused]] flecs::entity e,
 
 GUISystem::GUISystem(flecs::world& world) {
   world.module<GUISystem>();
-
   world.import <component::GUIComponent>();
 
-  world.observer<component::GUI>().event(flecs::OnSet).each(GUIInitialize);
+  world.system<component::GUI>().kind(flecs::OnLoad).each(GUIInitialize);
   world.observer<component::GUI>().event(flecs::OnDelete).each(GUIShutdown);
 }
 } // namespace wen::system
