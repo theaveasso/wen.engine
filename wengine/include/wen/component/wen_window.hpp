@@ -1,14 +1,15 @@
 #ifndef WEN_COMPONENT_WEN_WINDOW_HPP_
 #define WEN_COMPONENT_WEN_WINDOW_HPP_
 
+#include <flecs.h>
+#include <SDL3/SDL.h>
+
 #include "wen/wen_defines.hpp"
 
-#include <flecs.h>
-
 namespace wen::component {
-struct WEN_API_EXPORT WindowConfig {
-  int         width;
-  int         height;
+struct WEN_API WindowConfig {
+  int width;
+  int height;
 
   explicit WindowConfig(int width_, int height_);
 };

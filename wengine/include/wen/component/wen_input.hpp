@@ -26,7 +26,7 @@ struct MouseState {
   KeyState view;
 };
 
-struct WEN_API_EXPORT Input {
+struct WEN_API Input {
   KeyState   keys[SDL_SCANCODE_COUNT];
   MouseState mouse_state;
 };

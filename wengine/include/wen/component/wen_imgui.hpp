@@ -8,7 +8,7 @@
 #include "wen/wen_defines.hpp"
 
 namespace wen::component {
-struct WEN_API_EXPORT Imgui {
+struct WEN_API Imgui {
   ImGuiIO*      io;
   ImGuiContext* ctx = nullptr;
 };

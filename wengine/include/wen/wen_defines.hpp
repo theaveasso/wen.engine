@@ -13,31 +13,18 @@
 
 #if !defined(WEN_STATIC)
 #if defined(WEN_SYSTEM_MACOS) || defined(WEN_SYSTEM_LINUX)
-#define WEN_API_EXPORT __attribute__((__visibility__("default")))
-#define WEN_API_IMPORT __attribute__((__visibility__("default")))
+#define WEN_API __attribute__((__visibility__("default")))
 #elif defined(WEN_SYSTEM_WINDOWS)
-#define WEN_API_EXPORT __declspec(dllexport)
-#define WEN_API_IMPORT __declspec(dllimport)
+#define WEN_API __declspec(dllexport)
 #else
 #error "System not support"
 #endif
 #else
-#define WEN_API_EXPORT
-#define WEN_API_IMPORT
+#define WEN_API
 #endif
 
-#include <SDL3/SDL.h>
-#include <memory>
-
-using std::make_unique;
-using std::unique_ptr;
-
-using std::make_shared;
-using std::shared_ptr;
-
-namespace wen {
-using Color = SDL_Color;
-
-} // namespace wen
+#define KIB(VAL) ((VAL) * 1024)
+#define MIB(VAL) ((VAL) * KIB(1024))
+#define GIB(VAL) ((VAL) * MIB(1024))
 
 #endif // WEN_DEFINES_HPP_

@@ -8,11 +8,9 @@ project(wen_sandbox LANGUAGES CXX)
 
 include(FetchContent)
 
-file(GLOB_RECURSE SOURCES source/*.cpp)
+file(GLOB_RECURSE SOURCES source/*.cpp source/*.hpp)
 file(GLOB_RECURSE HEADERS include/*.hpp)
 set(WEN_SOURCES ${SOURCES} ${HEADERS})
-
-include_directories("include")
 
 add_executable(${PROJECT_NAME} ${WEN_SOURCES})
 

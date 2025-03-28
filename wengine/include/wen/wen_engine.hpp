@@ -1,42 +1,23 @@
 #ifndef WEN_ENGINE_HPP_
 #define WEN_ENGINE_HPP_
 
-#include <cstddef>
-#include <flecs.h>
+#include <cstdint>
 
-#include "wen/wen_defines.hpp"
+#include "wen_defines.hpp"
 
-namespace wen {
+struct game_t;
 
-struct position {};
-struct velocity {};
+typedef struct app_config_t {
+  int16_t start_pos_x;
+  int16_t start_pos_y;
 
-class WEN_API_EXPORT engine {
-public:
-  engine();
-  ~engine();
+  int16_t start_width;
+  int16_t start_height;
 
-  bool initialize();
-  void run();
+  const char* title;
+} app_config_t;
 
-private:
-  std::unique_ptr<flecs::world> m_engine;
-
-  flecs::query<> m_on_process_event_q;
-  flecs::query<> m_on_draw_q;
-  flecs::query<> m_on_update_q;
-  flecs::query<> m_on_begin_draw_q;
-  flecs::query<> m_on_end_draw_q;
-
-private:
-  template <typename T> flecs::query<> create_query() {
-    return m_engine->query_builder<>()
-        .with<T>()
-        .order_by(0, [](flecs::entity_t e1, const void* pt1, flecs::entity_t e2,
-                        const void* pt2) { return (e1 > e2) - (e1 < e2); })
-        .build();
-  }
-};
-} // namespace wen
+WEN_API bool engine_create(struct game_t* game_inst);
+WEN_API bool engine_run();
 
 #endif // WEN_ENGINE_HPP_
