@@ -7,10 +7,6 @@
 #include "wen/wen_defines.hpp"
 
 namespace wen {
-
-struct position {};
-struct velocity {};
-
 class WEN_API_EXPORT engine {
 public:
   engine();

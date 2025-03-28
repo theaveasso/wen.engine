@@ -8,6 +8,14 @@ static const char* WEN_APP      = "wen.app";
 static const char* WEN_WINDOW   = "wen.window";
 static const char* WEN_RENDERER = "wen.renderer";
 
+namespace wen::component {
+struct Query {
+  ecs_query_t* q;
+};
+
+struct Rectangle2d {};
+} // namespace wen::component
+
 #include "wen_engine.hpp"
 
 #endif // WEN_HPP_

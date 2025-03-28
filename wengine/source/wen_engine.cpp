@@ -1,5 +1,9 @@
 #include "wen/wen_engine.hpp"
 
+#include "wen/component/wen_material.hpp"
+#include "wen/component/wen_primitive.hpp"
+#include "wen/system/wen_material.hpp"
+#include "wen/system/wen_primitive.hpp"
 #include "wen/wen.hpp"
 
 #include "wen/component/wen_imgui.hpp"
@@ -42,6 +46,9 @@ bool engine::initialize() {
   m_engine->import <system::RendererSystem>();
   m_engine->import <system::ImguiSystem>();
   m_engine->import <system::InputSystem>();
+  m_engine->import <system::PrimitiveSystem>();
+
+  m_engine->import <system::MaterialSystem>();
 
   m_on_process_event_q = create_query<component::OnProcessEvent>();
   m_on_draw_q          = create_query<component::OnDraw>();
@@ -61,6 +68,12 @@ bool engine::initialize() {
   app.add<component::Renderer>();
   app.add<component::Imgui>();
   app.add<component::Input>();
+
+  auto metat_mat_id = 1;
+
+  auto mat1 = m_engine->entity("metal").add<component::MaterialID>();
+
+  // auto t = app.add<component::Rect2d>();
 
   return true;
 }

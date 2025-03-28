@@ -8,6 +8,21 @@ class RendererSystem {
 public:
   explicit RendererSystem(flecs::world& world);
 };
+
+class BaseRenderer {
+public:
+  explicit BaseRenderer(flecs::world& world);
+};
+
+class DeferedRenderer {
+public:
+  explicit DeferedRenderer(flecs::world& world);
+};
+
+class ForwardRenderer {
+public:
+  explicit ForwardRenderer(flecs::world& world);
+};
 } // namespace wen::system
 
 #endif // WEN_SYSTEM_WEN_RENDERER_HPP_
