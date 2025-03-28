@@ -2,14 +2,16 @@
 
 #include "wen/wen.hpp"
 
+#include "wen/component/wen_imgui.hpp"
 #include "wen/component/wen_input.hpp"
 #include "wen/component/wen_pipeline_phase.hpp"
 #include "wen/component/wen_renderer.hpp"
 #include "wen/component/wen_window.hpp"
 
+#include "wen/system/wen_imgui.hpp"
+#include "wen/system/wen_input.hpp"
 #include "wen/system/wen_renderer.hpp"
 #include "wen/system/wen_window.hpp"
-#include "wen/system/wen_input.hpp"
 
 namespace wen {
 
@@ -38,6 +40,7 @@ bool engine::initialize() {
 
   m_engine->import <system::WindowSystem>();
   m_engine->import <system::RendererSystem>();
+  m_engine->import <system::ImguiSystem>();
   m_engine->import <system::InputSystem>();
 
   m_on_process_event_q = create_query<component::OnProcessEvent>();
@@ -56,6 +59,7 @@ bool engine::initialize() {
 
   app.emplace<component::WindowConfig>(1280, 720);
   app.add<component::Renderer>();
+  app.add<component::Imgui>();
   app.add<component::Input>();
 
   return true;
@@ -63,9 +67,6 @@ bool engine::initialize() {
 
 void engine::run() {
   // m_engine->atfini(ShutdownEngine);
-
-  while (!m_engine->should_quit()) {
-    m_engine->progress();
-  }
+  m_engine->app().enable_stats().enable_rest(3333).delta_time(1.0 / 60.0).run();
 }
 } // namespace wen

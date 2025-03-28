@@ -2,7 +2,6 @@
 
 #include "wen/component/wen_renderer.hpp"
 #include "wen/component/wen_window.hpp"
-#include <iostream>
 
 namespace wen::system {
 static void InitRenderer(flecs::entity e, component::Renderer& r) {
@@ -47,5 +46,5 @@ RendererSystem::RendererSystem(flecs::world& world) {
   world.observer<component::Renderer>()
       .event(flecs::OnRemove)
       .each(ShutdownRenderer);
-} // namespace wen::system
+} 
 } // namespace wen::system
