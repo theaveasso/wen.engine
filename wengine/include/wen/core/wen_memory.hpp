@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include "wen/wen_defines.hpp"
+#include "wen/internal/wen_internal_defines.hpp"
 
 typedef enum memory_tag_t {
   MEMTAG_UNKNOWN,
@@ -23,7 +23,7 @@ typedef enum memory_tag_t {
   MEMTAG_VECTOR,
   MEMTAG_RENDERER,
 
-  MEMTAG_MAX_TAGS,
+  MEMTAG_COUNT,
 } memory_tag_t;
 
 void WEN_API wen_meminit();

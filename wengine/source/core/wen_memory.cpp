@@ -5,18 +5,17 @@
 
 struct memory_stats_t {
   uint64_t total_allocated;
-  uint64_t tagged_allocations[MEMTAG_MAX_TAGS];
+  uint64_t tagged_allocations[MEMTAG_COUNT];
 };
 
 static struct memory_stats_t stats {};
 
-static const char* memtags[MEMTAG_MAX_TAGS] = {
+static const char* memtags[MEMTAG_COUNT] = {
     "UNKNOWN",     "ARRAY",  "APPLICATION",
     "BST",         "DICT",   "ENTITY",
     "ENTITY_NODE", "JOB",    "MATERIAL_INSTANCE",
     "RING_QUEUE",  "STRING", "SCENE",
     "TEXTURE",     "VECTOR", "RENDERER",
-
 };
 
 void wen_meminit() {
@@ -71,7 +70,7 @@ void* wen_memset(void* dst_, int32_t val_, uint64_t dwords_) {
 std::string get_mem_usage_str() {
   std::string buffer = "WEN System memory usage: \n";
 
-  for (uint64_t i = 0; i < MEMTAG_MAX_TAGS; ++i) {
+  for (uint64_t i = 0; i < MEMTAG_COUNT; ++i) {
     char  unit[4] = "XIB";
     float amount  = 1.0f;
 

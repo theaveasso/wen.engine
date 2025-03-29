@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "wen_defines.hpp"
+#include "wen/internal/wen_internal_defines.hpp"
 
 struct game_t;
 

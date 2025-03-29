@@ -1,7 +1,7 @@
 #ifndef WEN_COMPONENT_WEN_PIPELINE_PHASE_HPP_
 #define WEN_COMPONENT_WEN_PIPELINE_PHASE_HPP_
 
-#include "wen/wen_defines.hpp"
+#include"wen/internal/wen_internal_defines.hpp"
 #include <flecs.h>
 
 namespace wen::component {

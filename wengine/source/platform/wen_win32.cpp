@@ -1,9 +1,8 @@
 #include "wen/platform/wen_platform.hpp"
 
-#include "wen/wen_defines.hpp"
+#include "wen/internal/wen_internal_defines.hpp"
 
 #if defined(WEN_SYSTEM_WINDOWS)
-#include <cstdlib>
 #include <windows.h>
 
 void* pm_memalloc(uint64_t len_, bool aligned_) {
@@ -29,5 +28,4 @@ void* pm_memcpy(void* dst_, const void* src_, uint64_t len_) {
 void* pm_memmove(void* dst_, const void* src_, uint64_t len_) {
   return memmove(dst_, src_, len_);
 }
-
 #endif

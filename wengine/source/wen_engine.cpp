@@ -2,16 +2,15 @@
 
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
+#include "wen/core/wen_event.hpp"
 
 #include "wen/wen_game_type.hpp"
 
 #include <SDL3/SDL.h>
 #include <flecs.h>
-#include <string>
 
 typedef struct engine_state_t {
   game_t*      game_inst;
-  ecs_world_t* world;
   bool         is_suspended;
   bool         is_running;
   float        last_time;
@@ -27,6 +26,7 @@ bool engine_create(game_t* game_inst) {
     WEN_ERROR("engine is already initialized.");
     return false;
   }
+
   app_state.game_inst = game_inst;
 
   app_state.is_running   = true;
@@ -34,6 +34,11 @@ bool engine_create(game_t* game_inst) {
 
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     WEN_ERROR("failed sdl init SDL_INIT_VIDEO.");
+    return false;
+  }
+
+  if (!event_system_initialize()) {
+    WEN_ERROR("fail initialize event system.");
     return false;
   }
 
@@ -56,17 +61,19 @@ bool engine_run() {
     }
 
     if (!app_state.game_inst->update(app_state.game_inst, 0)) {
-      WEN_FATAL("game update failed, shutting down.");
+      WEN_ERROR("game update failed, shutting down.");
       app_state.is_running = false;
       return false;
     }
 
     if (!app_state.game_inst->render(app_state.game_inst, 0)) {
-      WEN_FATAL("game render failed, shutting down.");
+      WEN_ERROR("game render failed, shutting down.");
       app_state.is_running = false;
       return false;
     }
   }
+
+  event_system_shutdown();
 
   app_state.is_running = false;
   return true;

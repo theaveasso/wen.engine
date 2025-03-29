@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 #include <flecs.h>
 
-#include "wen/wen_defines.hpp"
+#include "wen/internal/wen_internal_defines.hpp"
 
 namespace wen::component {
 struct KeyState {
