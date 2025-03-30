@@ -25,6 +25,9 @@ if (NOT MSVC)
 target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 endif ()
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE WEN_PLATFORM_DESKTOP_SDL)
+target_compile_definitions(${PROJECT_NAME} PRIVATE WEN_BUILD_SHARED)
+
 set(ASSET_SRC_DIR "${CMAKE_SOURCE_DIR}/etc")
 set(ASSET_DST_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/etc")
 add_custom_command(

@@ -1,13 +1,16 @@
+/**
+ * @file
+ * @brief
+ */
 #ifndef WEN_ENTRY_HPP_
 #define WEN_ENTRY_HPP_
 
+#include "wen.hpp"
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
-#include "wen_defines.hpp"
-#include "wen_engine.hpp"
 #include "wen_game_type.hpp"
 
-extern bool game_create(game_t* out_game);
+extern bool game_create(wen_game_t* out_game);
 
 /**
  * The main entry point of the application.
@@ -15,7 +18,7 @@ extern bool game_create(game_t* out_game);
 int main(int, char**) {
   wen_meminit();
 
-  game_t game_inst{};
+  wen_game_t game_inst{};
   if (!game_create(&game_inst)) {
     return -1;
   }
@@ -31,6 +34,7 @@ int main(int, char**) {
     return 2;
   }
 
+  wen_memfree(&game_inst.state, sizeof(game_inst.state), MEMORY_TAG_APPLICATION);
   wen_memcleanup();
 
   return 0;

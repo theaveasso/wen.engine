@@ -2,8 +2,9 @@
 
 #include "wen/core/wen_memory.hpp"
 #include "wen/datastructures/wen_vec.hpp"
-#include "wen/internal/wen_internal_defines.hpp"
-#include "wen/wen_defines.hpp"
+#include "wen/wen.hpp"
+
+#include "wen/core/wen_logger.hpp"
 
 /**
  *
@@ -37,18 +38,18 @@ bool event_system_initialize() {
   if (is_initialized) {
     return false;
   }
-  is_initialized = false;
-  wen_memzero(&event_state, sizeof(event_state));
+
+  wen_memzero(&event_state, sizeof(event_system_state_t));
   is_initialized = true;
 
   return true;
 }
 
 void event_system_shutdown() {
-  for (auto& i : event_state.registered) {
-    if (i.events != nullptr) {
-      vec_destroy(i.events);
-      i.events = nullptr;
+  for (uint16_t i = 0; i < WEN_MESSAGE_CODE_COUNT_MAX; ++i) {
+    if (event_state.registered[i].events != nullptr) {
+      vec_destroy(event_state.registered[i].events);
+      event_state.registered[i].events = nullptr;
     }
   }
 }
@@ -61,9 +62,8 @@ bool event_register(uint16_t code, void* listener, on_event_proc_t on_event) {
 
   /** register new event type. */
   if (event_state.registered[code].events == nullptr) {
-    event_state.registered[code].events = vec_create(registered_event_t);
+    event_state.registered[code].events = (registered_event_t*)vec_create(registered_event_t);
   }
-
   /** filter out the event from the same listener. */
   uint64_t registered_count = vec_len(event_state.registered[code].events);
   for (uint64_t i = 0; i < registered_count; ++i) {
@@ -84,8 +84,7 @@ bool event_register(uint16_t code, void* listener, on_event_proc_t on_event) {
   return true;
 }
 
-bool event_unregister(uint16_t code_, void* listener_,
-                      on_event_proc_t on_event_) {
+bool event_unregister(uint16_t code_, void* listener_, on_event_proc_t on_event_) {
   /** event system not initialize. */
   if (!is_initialized) {
     return false;

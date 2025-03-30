@@ -5,21 +5,31 @@
 
 struct memory_stats_t {
   uint64_t total_allocated;
-  uint64_t tagged_allocations[MEMTAG_COUNT];
+  uint64_t tagged_allocations[MEMORY_TAG_COUNT];
 };
 
 static struct memory_stats_t stats {};
 
-static const char* memtags[MEMTAG_COUNT] = {
-    "UNKNOWN",     "ARRAY",  "APPLICATION",
-    "BST",         "DICT",   "ENTITY",
-    "ENTITY_NODE", "JOB",    "MATERIAL_INSTANCE",
-    "RING_QUEUE",  "STRING", "SCENE",
-    "TEXTURE",     "VECTOR", "RENDERER",
+static const char* memory_tags[MEMORY_TAG_COUNT] = {
+    "UNKNOWN",
+    "ARRAY",
+    "APPLICATION",
+    "BST",
+    "DICT",
+    "ENTITY",
+    "ENTITY_NODE",
+    "JOB",
+    "MATERIAL_INSTANCE",
+    "RING_QUEUE",
+    "STRING",
+    "SCENE",
+    "TEXTURE",
+    "VECTOR",
+    "RENDERER",
 };
 
 void wen_meminit() {
-  pm_memzero(&stats, sizeof(stats));
+  platform_memzero(&stats, sizeof(stats));
 }
 
 void wen_memcleanup() {
@@ -27,7 +37,7 @@ void wen_memcleanup() {
 }
 
 void* wen_memalloc(uint64_t size_, memory_tag_t tag_) {
-  if (tag_ == memory_tag_t::MEMTAG_UNKNOWN) {
+  if (tag_ == memory_tag_t::MEMORY_TAG_UNKNOWN) {
     WEN_WARN(
         "wen_allocate called using MEMTAG_UNKNOWN. re-class this allocation.");
   }
@@ -36,14 +46,14 @@ void* wen_memalloc(uint64_t size_, memory_tag_t tag_) {
   stats.tagged_allocations[tag_] += size_;
 
   // TODO: MEMORY ALIGNMENT
-  void* block = pm_memalloc(size_, false);
-  pm_memzero(block, size_);
+  void* block = platform_memalloc(size_, false);
+  platform_memzero(block, size_);
 
   return block;
 }
 
 void wen_memfree(void* mem_, uint64_t size_, memory_tag_t tag_) {
-  if (tag_ == memory_tag_t::MEMTAG_UNKNOWN) {
+  if (tag_ == memory_tag_t::MEMORY_TAG_UNKNOWN) {
     WEN_WARN(
         "wen_allocate called using MEMTAG_UNKNOWN. re-class this allocation.");
   }
@@ -52,25 +62,25 @@ void wen_memfree(void* mem_, uint64_t size_, memory_tag_t tag_) {
   stats.tagged_allocations[tag_] -= size_;
 
   // TODO: MEMORY ALIGNMENT
-  pm_memfree(mem_, false);
+  platform_memfree(mem_, false);
 }
 
 void* wen_memzero(void* mem_, uint64_t len) {
-  return pm_memzero(mem_, len);
+  return platform_memzero(mem_, len);
 }
 
 void* wen_memcpy(void* dst, const void* src, uint64_t len) {
-  return pm_memcpy(dst, src, len);
+  return platform_memcpy(dst, src, len);
 }
 
 void* wen_memset(void* dst_, int32_t val_, uint64_t dwords_) {
-  return pm_memset(dst_, val_, dwords_);
+  return platform_memset(dst_, val_, dwords_);
 }
 
 std::string get_mem_usage_str() {
   std::string buffer = "WEN System memory usage: \n";
 
-  for (uint64_t i = 0; i < MEMTAG_COUNT; ++i) {
+  for (uint64_t i = 0; i < MEMORY_TAG_COUNT; ++i) {
     char  unit[4] = "XIB";
     float amount  = 1.0f;
 
@@ -88,7 +98,7 @@ std::string get_mem_usage_str() {
       unit[1] = 0;
       amount  = static_cast<float>(stats.tagged_allocations[i]);
     }
-    buffer += memtags[i] + (": " + std::to_string(amount) + unit + "\n");
+    buffer += memory_tags[i] + (": " + std::to_string(amount) + unit + "\n");
   }
   return buffer;
 }

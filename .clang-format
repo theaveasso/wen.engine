@@ -1,11 +1,11 @@
 ---
 BasedOnStyle: LLVM
-AllowShortCaseLabelsOnASingleLine: 'true'
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: InlineOnly
-AlignConsecutiveDeclarations: 'true'
-AlignConsecutiveAssignments: 'true'
-ColumnLimit: 80
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+ColumnLimit: 0
 PointerAlignment: Left
-SortIncludes: 'true'
-TabWidth: '2'
+SortIncludes: CaseSensitive
+TabWidth: 2
 ...
