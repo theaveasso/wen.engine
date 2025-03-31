@@ -1,8 +1,11 @@
 #include "wen/platform/wen_platform.hpp"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
+#include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_input.hpp"
+#include "wen/datastructures/wen_vec.hpp"
 #include "wen/core/wen_memory.hpp"
 
 typedef struct sdl_platform_data_t {
@@ -23,6 +26,8 @@ bool platform_init(wen_platform_state_t* state_, const char* name_, int32_t widt
 
   SDL_WindowFlags window_flags = 0;
   window_flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+  window_flags |= SDL_WINDOW_VULKAN;
+
   state->window = SDL_CreateWindow(name_, width_, height_, window_flags);
   if (!state->window) {
     return false;
@@ -44,6 +49,10 @@ bool platform_init(wen_platform_state_t* state_, const char* name_, int32_t widt
   }
 
   return true;
+}
+
+void platform_get_required_exts_names(const char*** exts_list) {
+  /** SDL automatically handle. */
 }
 
 void platform_shutdown(wen_platform_state_t* state_) {

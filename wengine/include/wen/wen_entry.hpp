@@ -34,7 +34,6 @@ int main(int, char**) {
     return 2;
   }
 
-  wen_memfree(&game_inst.state, sizeof(game_inst.state), MEMORY_TAG_APPLICATION);
   wen_memcleanup();
 
   return 0;

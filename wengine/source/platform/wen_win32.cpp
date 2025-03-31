@@ -1,5 +1,6 @@
 #include "wen/platform/wen_platform.hpp"
 
+#include <cassert>
 #include "wen/wen.hpp"
 
 #if defined(WEN_SYSTEM_WINDOWS)
@@ -13,6 +14,12 @@ void platform_memfree(void* block_, bool aligned_) {
   if (!block_) {
     return;
   }
+
+#if defined(WEN_DEBUG)
+  /** Debugging: Check for double free. */
+  assert(block_ != (void*)0xDDDDDDDD);
+#endif
+
   free(block_);
   block_ = nullptr;
 }

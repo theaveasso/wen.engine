@@ -2,6 +2,7 @@
 #define WEN_LOGGER_HPP_
 
 #include <SDL3/SDL.h>
+#include <cassert>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,16 @@ void wen_info(const char* fmt, ...);
 void wen_warn(const char* fmt, ...);
 void wen_error(const char* fmt, ...);
 void wen_fatal(const char* fmt, ...);
+
+#if defined(WEN_DEBUG)
+#define wen_assert(condition, message) \
+  if (!(condition)) {                  \
+    wen_fatal(message);                \
+    assert(condition);                 \
+  }
+#else
+#define wen_assert(condition, message)
+#endif
 
 #ifdef __cplusplus
 }
