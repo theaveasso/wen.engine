@@ -19,6 +19,7 @@ add_subdirectory(thirdparty/glm EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/sdl3 EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/flecs EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/imgui EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty/vulkan EXCLUDE_FROM_ALL)
 
 add_subdirectory(wengine)
 add_subdirectory(editor)

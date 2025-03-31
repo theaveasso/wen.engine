@@ -2,8 +2,18 @@ cmake_minimum_required(VERSION 3.28.1)
 
 project(wen_engine LANGUAGES CXX)
 
+set(VULKAN_SDK $ENV{VULKAN_SDK})
+set(VULKAN_INCLUDE_DIR ${VULKAN_SDK}/Include)
+set(VULKAN_LIBRARY ${VULKAN_SDK}/Lib/vulkan-1.lib)
+if (NOT EXISTS ${VULKAN_LIBRARY})
+    message(FATAL_ERROR "Vulkan library not found: ${VULKAN_LIBRARY}")
+endif ()
+
+find_library(VULKAN_LIBRARY vulkan HINTS ${CMAKE_LIBRARY_PATH})
+find_path(VULKAN_INCLUDE_DIR vulkan/vulkan.h HINTS ${CMAKE_INCLUDE_PATH})
+
 file(GLOB_RECURSE SOURCES source/*.cpp)
-file(GLOB_RECURSE HEADERS include/*.hpp)
+file(GLOB_RECURSE HEADERS include/*.hpp include/*.inl)
 set(WEN_SOURCES ${SOURCES} ${HEADERS})
 
 add_library(${PROJECT_NAME} SHARED ${WEN_SOURCES})
@@ -14,9 +24,9 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/flecs
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/imgui
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/glm
+        ${VULKAN_INCLUDE_DIR}
 )
-
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 imgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 imgui ${VULKAN_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PUBLIC  flecs glm)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
