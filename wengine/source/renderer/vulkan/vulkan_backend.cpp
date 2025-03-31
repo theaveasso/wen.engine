@@ -24,11 +24,11 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
 
   VkResult result = vkCreateInstance(&create_info, context.allocator, &context.instance);
   if (result != VK_SUCCESS) {
-    WEN_ERROR("vkCreateInstance failed with result : %u", result);
+    wen_error("vkCreateInstance failed with result : %u", result);
     return false;
   }
 
-  WEN_INFO("Vulkan renderer backend initialized successfully.");
+  wen_info("Vulkan renderer backend initialized successfully.");
   return true;
 }
 

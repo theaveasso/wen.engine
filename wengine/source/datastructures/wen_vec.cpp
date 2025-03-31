@@ -65,7 +65,7 @@ void* m_vec_pop_at(void* arr_, uint64_t idx_, void* dst_) {
   uint64_t len    = vec_len(arr_);
   uint64_t stride = vec_stride(arr_);
   if (idx_ >= len) {
-    WEN_ERROR("%s", "column index out of range.");
+    wen_error("column index out of range.");
     return arr_;
   }
 
@@ -86,7 +86,7 @@ void* m_vec_insert_at(void* arr_, uint64_t idx_, void* val_ptr_) {
   uint64_t len = vec_len(arr_);
   uint64_t stride = vec_stride(arr_);
   if (idx_ >= len) {
-    WEN_ERROR("%s", "column index out of range.");
+    wen_error("column index out of range.");
     return arr_;
   }
   if (idx_ >= vec_capacity(arr_)) {

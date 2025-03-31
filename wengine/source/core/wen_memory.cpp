@@ -38,8 +38,8 @@ void wen_memcleanup() {
 
 void* wen_memalloc(uint64_t size_, memory_tag_t tag_) {
   if (tag_ == memory_tag_t::MEMORY_TAG_UNKNOWN) {
-    WEN_WARN(
-        "wen_allocate called using MEMTAG_UNKNOWN. re-class this allocation.");
+    wen_warn(
+        "wen_allocate called using MEMORY_TAG_UNKNOWN. re-class this allocation.");
   }
 
   stats.total_allocated += size_;
@@ -54,8 +54,8 @@ void* wen_memalloc(uint64_t size_, memory_tag_t tag_) {
 
 void wen_memfree(void* mem_, uint64_t size_, memory_tag_t tag_) {
   if (tag_ == memory_tag_t::MEMORY_TAG_UNKNOWN) {
-    WEN_WARN(
-        "wen_allocate called using MEMTAG_UNKNOWN. re-class this allocation.");
+    wen_warn(
+             "wen_allocate called using MEMORY_TAG_UNKNOWN. re-class this allocation.");
   }
 
   stats.total_allocated -= size_;

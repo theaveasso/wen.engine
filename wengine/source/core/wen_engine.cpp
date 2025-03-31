@@ -38,7 +38,6 @@ static wen_engine_t engine_state{};
 
 bool engine_create(wen_game_t* game_inst) {
   if (initialized) {
-    WEN_ERROR("engine is already initialized.");
     return false;
   }
 
@@ -47,10 +46,11 @@ bool engine_create(wen_game_t* game_inst) {
   engine_state.is_running   = true;
   engine_state.is_suspended = false;
 
+  log_system_initialize();
   input_system_initialize();
 
   if (!event_system_initialize()) {
-    WEN_ERROR("fail initialize event system.");
+    wen_error("fail initializing event system!");
     return false;
   }
 
@@ -69,7 +69,7 @@ bool engine_create(wen_game_t* game_inst) {
   }
 
   if (!engine_state.game_inst->initialize(engine_state.game_inst)) {
-    WEN_ERROR("failed initialize game instance.");
+    wen_error("failed initialize game instance.");
     return false;
   }
 
@@ -82,7 +82,7 @@ bool engine_create(wen_game_t* game_inst) {
 }
 
 bool engine_run() {
-  WEN_TRACE("%s", get_mem_usage_str().c_str());
+  wen_trace(get_mem_usage_str().c_str());
 
   clock_start(&engine_state.clock);
   clock_update(&engine_state.clock);
@@ -106,13 +106,13 @@ bool engine_run() {
     }
 
     if (!engine_state.game_inst->update(engine_state.game_inst, (float)deltatime)) {
-      WEN_ERROR("game update failed, shutting down.");
+      wen_error("game update failed, shutting down!");
       engine_state.is_running = false;
       return false;
     }
 
     if (!engine_state.game_inst->render(engine_state.game_inst, 0)) {
-      WEN_ERROR("game render failed, shutting down.");
+      wen_error("game render failed, shutting down.");
       engine_state.is_running = false;
       return false;
     }
@@ -128,7 +128,7 @@ bool engine_run() {
     double remaining_seconds = target_fps - frame_elapsed_time;
     if (remaining_seconds > 0) {
       uint64_t remaining_ms = (uint64_t)remaining_seconds * 1000;
-      bool     limit_frames = false;
+      // bool     limit_frames = false;
       if (remaining_ms > 0 /** && limit_frames */) {
         platform_sleep((uint32_t)remaining_seconds - 1);
       }
