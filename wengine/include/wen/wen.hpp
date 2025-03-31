@@ -69,6 +69,15 @@ extern "C" {
  */
 #define GIB(VAL) ((VAL) * MIB(1024))
 
+/** @def WEN_CAST
+ * Abstraction on top of C-style casts so that C functions can be used in C++ code without producing warnings.
+ */
+#ifndef __cplusplus
+#define WEN_CAST(T, V) ((T)(V))
+#else
+#define WEN_CAST(T, V) (static_cast<T>(V))
+#endif
+
 typedef struct {
   int x;
   int y;

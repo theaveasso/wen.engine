@@ -10,6 +10,8 @@
 
 #include "wen/platform/wen_platform.hpp"
 
+#include "wen/renderer/wen_renderer_frontend.hpp"
+
 #include "wen/wen_game_type.hpp"
 
 typedef struct wen_engine_t {
@@ -59,6 +61,10 @@ bool engine_create(wen_game_t* game_inst) {
   if (!platform_init(&engine_state.platform_state, engine_state.title,
                      engine_state.game_inst->app_config.start_width,
                      engine_state.game_inst->app_config.start_height)) {
+    return false;
+  }
+  if (!renderer_initialize(engine_state.title, &engine_state.platform_state)) {
+
     return false;
   }
 
@@ -111,6 +117,10 @@ bool engine_run() {
       return false;
     }
 
+    wen_render_packet_t packet;
+    packet.deltatime = (float)deltatime;
+    renderer_draw_frame(&packet);
+
     double frame_end_time     = platform_get_absolute_time();
     double frame_elapsed_time = frame_end_time - frame_start_time;
 
@@ -131,6 +141,8 @@ bool engine_run() {
     engine_state.last_time = current_time;
   }
 
+  engine_state.is_running = false;
+
   event_unregister(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, engine_on_event);
   event_unregister(WEN_EVENT_CODE_BUTTON_RELEASED, nullptr, engine_on_key);
   event_unregister(WEN_EVENT_CODE_KEY_PRESSED, nullptr, engine_on_key);
@@ -138,7 +150,7 @@ bool engine_run() {
   event_system_shutdown();
   input_system_shutdown();
 
-  engine_state.is_running = false;
+  renderer_shutdown();
   platform_shutdown(&engine_state.platform_state);
 
   return true;
