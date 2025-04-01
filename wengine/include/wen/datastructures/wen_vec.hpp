@@ -38,10 +38,10 @@ WEN_API void* m_vec_resize(void* arr_);
 #define vec_destroy(array) m_vec_destroy(array)
 
 #define vec_push(array, value)                                  \
-  {                                                             \
+  do {                                                          \
     typeof(value) tmp = value;                                  \
     array             = (typeof(array))m_vec_push(array, &tmp); \
-  }
+  } while (0)
 
 #define vec_pop(array, value_ptr) m_vec_pop(array, value_ptr)
 
@@ -49,10 +49,10 @@ WEN_API void* m_vec_resize(void* arr_);
   array = (typeof(array))m_vec_pop_at(array, index, value_ptr);
 
 #define vec_insert_at(array, index, value_ptr)               \
-  {                                                          \
+  do {                                                       \
     typeof(value) tmp = value;                               \
     array             = m_vec_insert_at(array, index, &tmp); \
-  }
+  } while (0)
 
 #define vec_clear(array) m_vec_field_set(array, VEC_LENGTH, 0)
 

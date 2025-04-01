@@ -63,9 +63,9 @@ bool engine_create(wen_game_t* game_inst) {
                      engine_state.game_inst->app_config.start_height)) {
     return false;
   }
-//  if (!renderer_initialize(engine_state.title, &engine_state.platform_state)) {
-//    return false;
-//  }
+  if (!renderer_initialize(engine_state.title, &engine_state.platform_state)) {
+    return false;
+  }
 
   if (!engine_state.game_inst->initialize(engine_state.game_inst)) {
     wen_error("failed initialize game instance.");
@@ -116,9 +116,9 @@ bool engine_run() {
       return false;
     }
 
-//    wen_render_packet_t packet;
-//    packet.deltatime = (float)deltatime;
-//    renderer_draw_frame(&packet);
+    wen_render_packet_t packet;
+    packet.deltatime = (float)deltatime;
+    renderer_draw_frame(&packet);
 
     double frame_end_time     = platform_get_absolute_time();
     double frame_elapsed_time = frame_end_time - frame_start_time;
@@ -149,7 +149,7 @@ bool engine_run() {
   event_system_shutdown();
   input_system_shutdown();
 
-//  renderer_shutdown();
+  renderer_shutdown();
   platform_shutdown(&engine_state.platform_state);
 
   return true;

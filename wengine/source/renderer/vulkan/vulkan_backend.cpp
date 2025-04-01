@@ -1,6 +1,7 @@
 #include "wen/renderer/vulkan/vulkan_backend.hpp"
 
 #include "wen/core/wen_logger.hpp"
+#include "wen/renderer/vulkan/vulkan_device.hpp"
 #include "wen/renderer/vulkan/vulkan_platform.hpp"
 #include "wen/renderer/vulkan/vulkan_types.inl"
 
@@ -26,8 +27,7 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
   create_info.pApplicationInfo     = &app_info;
 
   /** Obtain a list of required extensions. */
-  const char** required_exts = vec_create(const char*);
-  vec_push(required_exts, &VK_KHR_SURFACE_EXTENSION_NAME);
+  const char ** required_exts = vec_create(const char*);
   platform_get_required_exts_names(&required_exts);
 #if defined(WEN_DEBUG)
   vec_push(required_exts, &VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -49,9 +49,9 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
 
   // Obtain a list of available validation layers
   uint32_t available_layer_count = 0;
-  vk_check(vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr));
+  vkEnumerateInstanceLayerProperties(&available_layer_count, nullptr);
   auto* available_layers = (VkLayerProperties*)vec_reserve(VkLayerProperties, available_layer_count);
-  vk_check(vkEnumerateInstanceLayerProperties(&available_layer_count, available_layers));
+  vkEnumerateInstanceLayerProperties(&available_layer_count, available_layers);
 
   for (uint32_t i = 0; i < required_validation_layer_count; ++i) {
     wen_info("[Vulkan Backend] - Searching for layer %s ...", required_validation_layer_names[i]);
@@ -74,10 +74,11 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
   create_info.enabledLayerCount   = required_validation_layer_count;
   create_info.ppEnabledLayerNames = required_validation_layer_names;
 
-  vk_check(vkCreateInstance(&create_info, context.allocator, &context.instance));
-
-  wen_info("[Vulkan Backend] - Vulkan instance created.");
-  wen_info("[Vulkan Backend] - renderer backend initialized successfully.");
+  VkResult result = vkCreateInstance(&create_info, context.allocator, &context.instance);
+  if (result != VK_SUCCESS) {
+    wen_fatal("[Vulkan Backend] - Creating Vulkan instance.");
+    return false;
+  }
 
 #if defined(WEN_DEBUG)
   wen_debug("[Vulkan Backend] - Creating Vulkan debugger.");
@@ -97,10 +98,26 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
   debug_create_info.messageType                        = message_type;
   debug_create_info.pfnUserCallback                    = vk_debug_callback;
 
-  auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkCreateDebugUtilsMessengerEXT");
-  wen_assert(func, "failed to create debug messenger!");
-  vk_check(func(context.instance, &debug_create_info, context.allocator, &context.debug_messenger));
+  auto create_debug_util_messenger_proc = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance, "vkCreateDebugUtilsMessengerEXT");
+  create_debug_util_messenger_proc(context.instance, &debug_create_info, context.allocator, &context.debug_messenger);
 #endif
+
+  /** Creating surface. */
+  if (!platform_create_vulkan_surface(&context, state_)) {
+    wen_error("[Vulkan Backend] - failed creating platform surface");
+    return false;
+  }
+  wen_info("[Vulkan Backend] - Platform surface created");
+
+  /** Query and select devices. */
+  if (!vulkan_device_create(&context)) {
+    wen_error("[Vulkan Backend] - fail creating Vulkan devices.");
+    return false;
+  }
+  wen_info("[Vulkan Backend] - Vulkan devices created");
+
+  wen_info("[Vulkan Backend] - Vulkan instance created.");
+  wen_info("[Vulkan Backend] - renderer backend initialized successfully.");
   return true;
 }
 
@@ -113,6 +130,9 @@ void vulkan_renderer_backend_shutdown(wen_renderer_backend_t* backend_) {
     func(context.instance, context.debug_messenger, context.allocator);
   }
 #endif
+
+  platform_destroy_vulkan_surface(&context);
+  
   wen_debug("[Vulkan Backend] - Destroying Vulkan instance.");
   vkDestroyInstance(context.instance, context.allocator);
 }
