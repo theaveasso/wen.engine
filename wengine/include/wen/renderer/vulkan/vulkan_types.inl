@@ -6,12 +6,13 @@
 #include <vulkan/vulkan.h>
 
 #if defined(WEN_DEBUG)
-#define vk_check(expr, message) \
-  do {                          \
-    if (expr != VK_SUCCESS) {   \
-      wen_error(message);       \
-      return;                   \
-    };                          \
+#define vk_check(expr)                          \
+  do {                                          \
+    VkResult err = expr;                        \
+    if (err) {                                  \
+      wen_error("Detected Vulkan error: ", err); \
+      abort();                                  \
+    };                                          \
   } while (0)
 #endif
 
@@ -31,6 +32,10 @@ typedef struct wen_vulkan_device_t {
   int32_t graphics_queue_index;
   int32_t present_queue_index;
   int32_t transfer_queue_index;
+
+  VkQueue graphics_queue;
+  VkQueue present_queue;
+  VkQueue transfer_queue;
 
   VkPhysicalDeviceFeatures         features;
   VkPhysicalDeviceProperties       properties;

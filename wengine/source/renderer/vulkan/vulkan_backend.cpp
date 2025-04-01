@@ -1,5 +1,7 @@
 #include "wen/renderer/vulkan/vulkan_backend.hpp"
 
+#include <SDL3/SDL_vulkan.h>
+
 #include "wen/core/wen_logger.hpp"
 #include "wen/renderer/vulkan/vulkan_device.hpp"
 #include "wen/renderer/vulkan/vulkan_platform.hpp"
@@ -25,6 +27,9 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
 
   VkInstanceCreateInfo create_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
   create_info.pApplicationInfo     = &app_info;
+
+  auto vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)SDL_Vulkan_GetVkGetInstanceProcAddr();
+  vkGetInstanceProcAddr(context.instance, "Wen Engine");
 
   /** Obtain a list of required extensions. */
   const char ** required_exts = vec_create(const char*);
@@ -59,27 +64,22 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
     for (uint32_t j = 0; j < available_layer_count; ++j) {
       if (wen_str_eq(required_validation_layer_names[i], available_layers[j].layerName)) {
         found = true;
-        wen_info("[Vulkan Backend] - Searching for layer %s found!", required_validation_layer_names[i]);
+        wen_debug("[Vulkan Backend] - Searching for layer %s found!", required_validation_layer_names[i]);
         break;
       }
     }
     if (!found) {
-      wen_info("[Vulkan Backend] - Required validation layer %s missing!", required_validation_layer_names[i]);
+      wen_trace("[Vulkan Backend] - Required validation layer %s missing!", required_validation_layer_names[i]);
       return false;
     }
   }
-  wen_info("[Vulkan Backend] - All required validation layers are present.");
+  wen_trace("[Vulkan Backend] - All required validation layers are present.");
 #endif
 
   create_info.enabledLayerCount   = required_validation_layer_count;
   create_info.ppEnabledLayerNames = required_validation_layer_names;
 
-  VkResult result = vkCreateInstance(&create_info, context.allocator, &context.instance);
-  if (result != VK_SUCCESS) {
-    wen_fatal("[Vulkan Backend] - Creating Vulkan instance.");
-    return false;
-  }
-
+  vk_check(vkCreateInstance(&create_info, context.allocator, &context.instance));
 #if defined(WEN_DEBUG)
   wen_debug("[Vulkan Backend] - Creating Vulkan debugger.");
   uint32_t log_severity = 0;
@@ -122,6 +122,9 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
 }
 
 void vulkan_renderer_backend_shutdown(wen_renderer_backend_t* backend_) {
+  vulkan_device_destroy(&context);
+  platform_destroy_vulkan_surface(&context);
+
 #if defined(WEN_DEBUG)
   wen_debug("[Vulkan Backend] - Destroying Vulkan debugger.");
   if (context.debug_messenger) {
@@ -131,8 +134,6 @@ void vulkan_renderer_backend_shutdown(wen_renderer_backend_t* backend_) {
   }
 #endif
 
-  platform_destroy_vulkan_surface(&context);
-  
   wen_debug("[Vulkan Backend] - Destroying Vulkan instance.");
   vkDestroyInstance(context.instance, context.allocator);
 }

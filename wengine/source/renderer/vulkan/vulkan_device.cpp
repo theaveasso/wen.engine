@@ -25,17 +25,123 @@ typedef struct wen_vulkan_physical_device_queue_family_info_t {
 } wen_vulkan_physical_device_queue_family_info_t;
 
 bool select_physical_device(wen_vulkan_context_t* context_);
+
 bool physical_device_meets_requirement(VkPhysicalDevice device_, VkSurfaceKHR surface_, const VkPhysicalDeviceProperties* props_, const VkPhysicalDeviceFeatures* features_, const wen_vulkan_physical_device_requirements_t* requirements, wen_vulkan_physical_device_queue_family_info_t* out_queue_info_, wen_vulkan_swapchain_support_info_t* out_swapchain_support);
 
 bool vulkan_device_create(wen_vulkan_context_t* context_) {
   if (!select_physical_device(context_)) {
+    wen_trace("");
     return false;
   }
+
+  bool present_shared_graphics_queue =
+      context_->devices.graphics_queue_index == context_->devices.present_queue_index;
+  bool transfer_shared_graphics_queue =
+      context_->devices.graphics_queue_index == context_->devices.transfer_queue_index;
+
+  uint32_t index_count = 1;
+  if (!present_shared_graphics_queue) {
+    index_count++;
+  }
+  if (!transfer_shared_graphics_queue) {
+    index_count++;
+  }
+  uint32_t indices[index_count];
+
+  uint8_t index    = 0;
+  indices[index++] = context_->devices.graphics_queue_index;
+  if (!present_shared_graphics_queue) {
+    indices[index++] = context_->devices.present_queue_index;
+  }
+  if (!transfer_shared_graphics_queue) {
+    indices[index++] = context_->devices.transfer_queue_index;
+  }
+
+  VkDeviceQueueCreateInfo queue_create_infos[index_count];
+  for (uint32_t i = 0; i < index_count; ++i) {
+    queue_create_infos[i].sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_create_infos[i].queueFamilyIndex = indices[i];
+    queue_create_infos[i].queueCount       = 1;
+
+    queue_create_infos[i].flags = 0;
+    queue_create_infos[i].pNext = nullptr;
+
+    float queue_priorities[2]                = {1.0f, 1.0f};
+
+    if (indices[i] == context_->devices.graphics_queue_index) {
+      queue_create_infos[i].queueCount = 2;
+      queue_create_infos[i].pQueuePriorities = queue_priorities;
+    } else {
+      queue_create_infos[i].queueCount = 1;
+      queue_create_infos[i].pQueuePriorities = &queue_priorities[0];
+    }
+  }
+
+  VkPhysicalDeviceFeatures device_features = {};
+  device_features.samplerAnisotropy        = VK_TRUE;
+
+  VkDeviceCreateInfo device_create_info      = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+  device_create_info.queueCreateInfoCount    = index_count;
+  device_create_info.pQueueCreateInfos       = queue_create_infos;
+  device_create_info.pEnabledFeatures        = &device_features;
+  device_create_info.enabledExtensionCount   = 1;
+  const char* extension_names                = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  device_create_info.ppEnabledExtensionNames = &extension_names;
+
+  vk_check(vkCreateDevice(
+                context_->devices.physical_device,
+                &device_create_info,
+                context_->allocator,
+                &context_->devices.logical_device));
+
+  vkGetDeviceQueue(
+      context_->devices.logical_device,
+      context_->devices.graphics_queue_index,
+      0,
+      &context_->devices.graphics_queue);
+
+  vkGetDeviceQueue(
+      context_->devices.logical_device,
+      context_->devices.graphics_queue_index,
+      0,
+      &context_->devices.present_queue);
+
+  vkGetDeviceQueue(
+      context_->devices.logical_device,
+      context_->devices.graphics_queue_index,
+      0,
+      &context_->devices.transfer_queue);
 
   return true;
 }
 
 void vulkan_device_destroy(wen_vulkan_context_t* context_) {
+  context_->devices.graphics_queue = nullptr;
+  context_->devices.present_queue = nullptr;
+  context_->devices.transfer_queue = nullptr;
+
+  if (context_->devices.logical_device) {
+    vkDestroyDevice(context_->devices.logical_device, context_->allocator);
+    context_->devices.logical_device = nullptr;
+  }
+
+  context_->devices.physical_device = nullptr;
+
+  if (context_->devices.swapchain_support_info.formats) {
+    wen_memfree(context_->devices.swapchain_support_info.formats,
+                sizeof(VkSurfaceFormatKHR) * context_->devices.swapchain_support_info.format_count,
+                MEMORY_TAG_RENDERER);
+    context_->devices.swapchain_support_info.formats      = nullptr;
+    context_->devices.swapchain_support_info.format_count = 0;
+  }
+  if (context_->devices.swapchain_support_info.present_modes) {
+    wen_memfree(context_->devices.swapchain_support_info.present_modes,
+                sizeof(VkPresentModeKHR) * context_->devices.swapchain_support_info.present_mode_count,
+                MEMORY_TAG_RENDERER);
+    context_->devices.swapchain_support_info.present_modes      = nullptr;
+    context_->devices.swapchain_support_info.present_mode_count = 0;
+  }
+  wen_memzero(&context_->devices.swapchain_support_info, sizeof(context_->devices.swapchain_support_info));
 }
 
 void vulkan_device_query_swapchain_support(
@@ -44,44 +150,41 @@ void vulkan_device_query_swapchain_support(
     wen_vulkan_swapchain_support_info_t* out_swapchain_support_) {
 
   vk_check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-               device_,
-               surface_,
-               &out_swapchain_support_->capabilities),
-           "failed getting physical device surface capabilities.");
+                device_,
+                surface_,
+                &out_swapchain_support_->capabilities));
   vk_check(vkGetPhysicalDeviceSurfaceFormatsKHR(
-               device_,
-               surface_,
-               &out_swapchain_support_->format_count,
-               nullptr),
-           "failed getting physical device surface format.");
+                device_,
+                surface_,
+                &out_swapchain_support_->format_count,
+                nullptr));
 
   if (out_swapchain_support_->format_count != 0) {
     if (!out_swapchain_support_->formats) {
       out_swapchain_support_->formats = (VkSurfaceFormatKHR*)wen_memalloc(sizeof(VkSurfaceFormatKHR) * out_swapchain_support_->format_count, MEMORY_TAG_RENDERER);
     }
     vk_check(vkGetPhysicalDeviceSurfaceFormatsKHR(
-                 device_,
-                 surface_,
-                 &out_swapchain_support_->format_count,
-                 out_swapchain_support_->formats),
-             "failed getting physical device surface format.");
+                  device_,
+                  surface_,
+                  &out_swapchain_support_->format_count,
+                  out_swapchain_support_->formats));
   }
 
   vk_check(vkGetPhysicalDeviceSurfacePresentModesKHR(
-               device_,
-               surface_,
-               &out_swapchain_support_->present_mode_count,
-               nullptr),
-           "failed getting physical device surface present modes.");
+                device_,
+                surface_,
+                &out_swapchain_support_->present_mode_count,
+                nullptr));
+
   if (out_swapchain_support_->present_mode_count != 0) {
     if (!out_swapchain_support_->present_modes) {
       out_swapchain_support_->present_modes = (VkPresentModeKHR*)wen_memalloc(sizeof(VkPresentModeKHR) * out_swapchain_support_->present_mode_count, MEMORY_TAG_RENDERER);
     }
     vk_check(vkGetPhysicalDeviceSurfacePresentModesKHR(
-        device_,
-        surface_,
-        &out_swapchain_support_->present_mode_count,
-        out_swapchain_support_->present_modes), "failed getting physical device surface present modes.");
+                  device_,
+                  surface_,
+                  &out_swapchain_support_->present_mode_count,
+                  out_swapchain_support_->present_modes));
   }
 }
 
