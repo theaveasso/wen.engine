@@ -13,6 +13,7 @@ void wen_fatal(const char* fmt, ...) {
   va_start(args, fmt);
   SDL_LogCritical(WEN_LOG_CATEGORY_FATAL, fmt, args);
   va_end(args);
+  abort();
 }
 
 void wen_error(const char* fmt, ...) {

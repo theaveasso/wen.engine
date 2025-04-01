@@ -41,11 +41,10 @@ void* m_vec_push(void* arr_, const void* val_ptr_) {
   uint64_t len    = vec_len(arr_);
   uint64_t stride = vec_stride(arr_);
   if (len >= vec_capacity(arr_)) {
-    arr_ = m_vec_resize(arr_);
+    arr_ = vec_resize_(arr_);
   }
 
-  auto addr = (uint64_t)arr_;
-  addr += (len * stride);
+  void* addr = (char*)arr_ + (len * stride);
   wen_memcpy((void*)addr, val_ptr_, stride);
 
   m_vec_field_set(arr_, VEC_LENGTH, len + 1);
@@ -91,7 +90,7 @@ void* m_vec_insert_at(void* arr_, uint64_t idx_, void* val_ptr_) {
     return arr_;
   }
   if (idx_ >= vec_capacity(arr_)) {
-    m_vec_resize(arr_);
+    vec_resize_(arr_);
   }
 
   auto addr = (uint64_t)arr_;
@@ -107,14 +106,15 @@ void* m_vec_insert_at(void* arr_, uint64_t idx_, void* val_ptr_) {
   return arr_;
 }
 
-void* m_vec_resize(void* arr_) {
-  uint64_t len    = vec_len(arr_);
-  uint64_t stride = vec_stride(arr_);
+void* vec_resize_(void* array) {
+  uint64_t len    = vec_len(array);
+  uint64_t stride = vec_stride(array);
+  uint64_t capacity = WEN_VEC_RESIZE_FACTOR * vec_capacity(array);
 
-  void* tmp = m_vec_create((WEN_VEC_RESIZE_FACTOR * vec_capacity(arr_)), stride);
-  wen_memcpy(tmp, arr_, len * stride);
+  void* resized_array = m_vec_create(capacity, stride);
+  wen_memcpy(resized_array, array, len * stride);
 
-  m_vec_field_set(tmp, VEC_LENGTH, len);
-  m_vec_destroy(arr_);
-  return tmp;
+  m_vec_field_set(resized_array, VEC_LENGTH, len);
+  m_vec_destroy(array);
+  return resized_array;
 }

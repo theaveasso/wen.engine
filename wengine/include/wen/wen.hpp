@@ -78,6 +78,11 @@ extern "C" {
 #define WEN_CAST(T, V) (static_cast<T>(V))
 #endif
 
+/** @def WEN_CLAMP
+ *
+ */
+#define WEN_CLAMP(value, min, max) ((value) <= (min) ? (min) : ((value) >= (max) ? (max) : (value)))
+
 typedef struct {
   int x;
   int y;

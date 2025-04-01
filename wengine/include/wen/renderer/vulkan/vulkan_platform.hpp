@@ -10,8 +10,7 @@ struct wen_vulkan_context_t;
  */
 void platform_get_required_exts_names(const char*** required_extensions_);
 
-bool platform_create_vulkan_surface(struct wen_vulkan_context_t* context_, struct wen_platform_state_t* state_);
-
-void platform_destroy_vulkan_surface(struct wen_vulkan_context_t* context_);
+bool vulkan_surface_init(struct wen_vulkan_context_t* context_, struct wen_platform_state_t* state_);
+void vulkan_surface_fini(struct wen_vulkan_context_t* context_);
 
 #endif // RENDERER_VULKAN_VULKAN_PLATFORM_HPP_

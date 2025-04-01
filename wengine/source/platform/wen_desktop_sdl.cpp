@@ -37,22 +37,6 @@ bool platform_init(wen_platform_state_t* state_, const char* name_, int32_t widt
   if (!state->window) {
     return false;
   }
-
-  SDL_GPUShaderFormat shader_formats = 0;
-  shader_formats |= SDL_GPU_SHADERFORMAT_SPIRV;
-  shader_formats |= SDL_GPU_SHADERFORMAT_DXIL;
-  shader_formats |= SDL_GPU_SHADERFORMAT_DXBC;
-  shader_formats |= SDL_GPU_SHADERFORMAT_MSL;
-  state->gpu_device = SDL_CreateGPUDevice(shader_formats, true, nullptr);
-  if (!state->gpu_device) {
-    return false;
-  }
-
-  result = SDL_ClaimWindowForGPUDevice(state->gpu_device, state->window);
-  if (!result) {
-    return false;
-  }
-
   return true;
 }
 
@@ -134,9 +118,9 @@ bool platform_is_running() {
 
 double platform_get_absolute_time() {
   return (double)SDL_GetTicks();
-};
+}
 
-bool platform_create_vulkan_surface(wen_vulkan_context_t* context_, wen_platform_state_t* state_) {
+bool vulkan_surface_init(wen_vulkan_context_t* context_, wen_platform_state_t* state_) {
   auto*        state = (sdl_platform_data_t*)state_->internal_state;
   VkSurfaceKHR surface;
   bool         result = SDL_Vulkan_CreateSurface(state->window, context_->instance, context_->allocator, &surface);
@@ -149,6 +133,6 @@ bool platform_create_vulkan_surface(wen_vulkan_context_t* context_, wen_platform
   return true;
 }
 
-void platform_destroy_vulkan_surface(wen_vulkan_context_t* context_) {
+void vulkan_surface_fini(wen_vulkan_context_t* context_) {
   SDL_Vulkan_DestroySurface(context_->instance, context_->surface, context_->allocator);
 }

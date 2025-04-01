@@ -26,7 +26,7 @@ WEN_API void  m_vec_pop(void* arr_, uint64_t idx_, void* val_ptr_);
 WEN_API void* m_vec_pop_at(void* arr_, uint64_t idx_, void* dst_);
 WEN_API void* m_vec_insert_at(void* arr_, uint64_t idx_, void* val_ptr_);
 
-WEN_API void* m_vec_resize(void* arr_);
+WEN_API void* vec_resize_(void* array);
 
 #define WEN_VEC_DEFAULT_CAPACITY 1
 #define WEN_VEC_RESIZE_FACTOR 2

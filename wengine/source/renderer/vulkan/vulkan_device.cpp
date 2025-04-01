@@ -6,15 +6,21 @@
 #include "wen/datastructures/wen_strbuf.hpp"
 #include "wen/datastructures/wen_vec.hpp"
 
+typedef struct wen_vulkan_device_extensions_t {
+  const char** names;
+  uint32_t     count;
+} wen_vulkan_device_extensions_t;
+
 typedef struct wen_vulkan_physical_device_requirements_t {
   bool graphics;
   bool present;
   bool compute;
   bool transfer;
 
-  const char** device_extension_names;
-  bool         sampler_anisotropy;
-  bool         discrete_gpu;
+  bool sampler_anisotropy;
+  bool discrete_gpu;
+
+  wen_vulkan_device_extensions_t device_extensions;
 } wen_vulkan_physical_device_requirements_t;
 
 typedef struct wen_vulkan_physical_device_queue_family_info_t {
@@ -28,7 +34,7 @@ bool select_physical_device(wen_vulkan_context_t* context_);
 
 bool physical_device_meets_requirement(VkPhysicalDevice device_, VkSurfaceKHR surface_, const VkPhysicalDeviceProperties* props_, const VkPhysicalDeviceFeatures* features_, const wen_vulkan_physical_device_requirements_t* requirements, wen_vulkan_physical_device_queue_family_info_t* out_queue_info_, wen_vulkan_swapchain_support_info_t* out_swapchain_support);
 
-bool vulkan_device_create(wen_vulkan_context_t* context_) {
+bool vulkan_device_init(wen_vulkan_context_t* context_) {
   if (!select_physical_device(context_)) {
     wen_trace("");
     return false;
@@ -66,13 +72,13 @@ bool vulkan_device_create(wen_vulkan_context_t* context_) {
     queue_create_infos[i].flags = 0;
     queue_create_infos[i].pNext = nullptr;
 
-    float queue_priorities[2]                = {1.0f, 1.0f};
+    float queue_priorities[2] = {1.0f, 1.0f};
 
     if (indices[i] == context_->devices.graphics_queue_index) {
-      queue_create_infos[i].queueCount = 2;
+      queue_create_infos[i].queueCount       = 2;
       queue_create_infos[i].pQueuePriorities = queue_priorities;
     } else {
-      queue_create_infos[i].queueCount = 1;
+      queue_create_infos[i].queueCount       = 1;
       queue_create_infos[i].pQueuePriorities = &queue_priorities[0];
     }
   }
@@ -89,10 +95,10 @@ bool vulkan_device_create(wen_vulkan_context_t* context_) {
   device_create_info.ppEnabledExtensionNames = &extension_names;
 
   vk_check(vkCreateDevice(
-                context_->devices.physical_device,
-                &device_create_info,
-                context_->allocator,
-                &context_->devices.logical_device));
+      context_->devices.physical_device,
+      &device_create_info,
+      context_->allocator,
+      &context_->devices.logical_device));
 
   vkGetDeviceQueue(
       context_->devices.logical_device,
@@ -115,9 +121,9 @@ bool vulkan_device_create(wen_vulkan_context_t* context_) {
   return true;
 }
 
-void vulkan_device_destroy(wen_vulkan_context_t* context_) {
+void vulkan_device_fini(wen_vulkan_context_t* context_) {
   context_->devices.graphics_queue = nullptr;
-  context_->devices.present_queue = nullptr;
+  context_->devices.present_queue  = nullptr;
   context_->devices.transfer_queue = nullptr;
 
   if (context_->devices.logical_device) {
@@ -144,48 +150,82 @@ void vulkan_device_destroy(wen_vulkan_context_t* context_) {
   wen_memzero(&context_->devices.swapchain_support_info, sizeof(context_->devices.swapchain_support_info));
 }
 
+void vulkan_logical_device_init(wen_vulkan_context_t* context) {
+}
+
+void vulkan_logical_device_fini(wen_vulkan_context_t* context) {
+}
+
 void vulkan_device_query_swapchain_support(
-    VkPhysicalDevice                     device_,
-    VkSurfaceKHR                         surface_,
-    wen_vulkan_swapchain_support_info_t* out_swapchain_support_) {
+    VkPhysicalDevice                     device,
+    VkSurfaceKHR                         surface,
+    wen_vulkan_swapchain_support_info_t* out_swapchain_support) {
 
   vk_check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                device_,
-                surface_,
-                &out_swapchain_support_->capabilities));
+      device,
+      surface,
+      &out_swapchain_support->capabilities));
   vk_check(vkGetPhysicalDeviceSurfaceFormatsKHR(
-                device_,
-                surface_,
-                &out_swapchain_support_->format_count,
-                nullptr));
+      device,
+      surface,
+      &out_swapchain_support->format_count,
+      nullptr));
 
-  if (out_swapchain_support_->format_count != 0) {
-    if (!out_swapchain_support_->formats) {
-      out_swapchain_support_->formats = (VkSurfaceFormatKHR*)wen_memalloc(sizeof(VkSurfaceFormatKHR) * out_swapchain_support_->format_count, MEMORY_TAG_RENDERER);
+  if (out_swapchain_support->format_count != 0) {
+    if (!out_swapchain_support->formats) {
+      out_swapchain_support->formats = (VkSurfaceFormatKHR*)wen_memalloc(sizeof(VkSurfaceFormatKHR) * out_swapchain_support->format_count, MEMORY_TAG_RENDERER);
     }
     vk_check(vkGetPhysicalDeviceSurfaceFormatsKHR(
-                  device_,
-                  surface_,
-                  &out_swapchain_support_->format_count,
-                  out_swapchain_support_->formats));
+        device,
+        surface,
+        &out_swapchain_support->format_count,
+        out_swapchain_support->formats));
   }
 
   vk_check(vkGetPhysicalDeviceSurfacePresentModesKHR(
-                device_,
-                surface_,
-                &out_swapchain_support_->present_mode_count,
-                nullptr));
+      device,
+      surface,
+      &out_swapchain_support->present_mode_count,
+      nullptr));
 
-  if (out_swapchain_support_->present_mode_count != 0) {
-    if (!out_swapchain_support_->present_modes) {
-      out_swapchain_support_->present_modes = (VkPresentModeKHR*)wen_memalloc(sizeof(VkPresentModeKHR) * out_swapchain_support_->present_mode_count, MEMORY_TAG_RENDERER);
+  if (out_swapchain_support->present_mode_count != 0) {
+    if (!out_swapchain_support->present_modes) {
+      out_swapchain_support->present_modes =
+          (VkPresentModeKHR*)wen_memalloc(
+              sizeof(VkPresentModeKHR) * out_swapchain_support->present_mode_count,
+              MEMORY_TAG_RENDERER);
     }
     vk_check(vkGetPhysicalDeviceSurfacePresentModesKHR(
-                  device_,
-                  surface_,
-                  &out_swapchain_support_->present_mode_count,
-                  out_swapchain_support_->present_modes));
+        device,
+        surface,
+        &out_swapchain_support->present_mode_count,
+        out_swapchain_support->present_modes));
   }
+}
+
+bool vulkan_device_detect_depth_format(wen_vulkan_device_t* device) {
+  VkFormat candidates[3]{
+      VK_FORMAT_D32_SFLOAT,
+      VK_FORMAT_D32_SFLOAT_S8_UINT,
+      VK_FORMAT_D24_UNORM_S8_UINT};
+
+  uint32_t flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  for (auto& candidate : candidates) {
+    VkFormatProperties properties;
+    vkGetPhysicalDeviceFormatProperties(
+        device->physical_device,
+        candidate,
+        &properties);
+
+    if ((properties.linearTilingFeatures & flags) == flags) {
+      device->depth_format = candidate;
+      return true;
+    } else if ((properties.optimalTilingFeatures & flags) == flags) {
+      device->depth_format = candidate;
+      return true;
+    }
+  }
+  return false;
 }
 
 bool select_physical_device(wen_vulkan_context_t* context_) {
@@ -213,14 +253,26 @@ bool select_physical_device(wen_vulkan_context_t* context_) {
     requirements.transfer                                  = true;
     // NOTE: Enable this if compute will be required.
     //    requirements.compute = true;
-    requirements.sampler_anisotropy     = true;
-    requirements.discrete_gpu           = true;
-    requirements.device_extension_names = vec_create(const char*);
-    vec_push(requirements.device_extension_names, &VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    requirements.sampler_anisotropy = true;
+    requirements.discrete_gpu       = true;
+
+    requirements.device_extensions       = {};
+    requirements.device_extensions.count = 1;
+    requirements.device_extensions.names = (const char**)wen_memalloc(
+        sizeof(const char*) * requirements.device_extensions.count,
+        MEMORY_TAG_RENDERER);
+    requirements.device_extensions.names[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
     wen_vulkan_physical_device_queue_family_info_t queue_info = {};
 
-    bool result = physical_device_meets_requirement(physical_devices[i], context_->surface, &properties, &features, &requirements, &queue_info, &context_->devices.swapchain_support_info);
+    bool result = physical_device_meets_requirement(
+        physical_devices[i],
+        context_->surface,
+        &properties,
+        &features, &requirements,
+        &queue_info,
+        &context_->devices.swapchain_support_info);
+
     if (result) {
       wen_info("Selected device: %s", properties.deviceName);
       switch (properties.deviceType) {
@@ -280,10 +332,12 @@ bool physical_device_meets_requirement(
     const wen_vulkan_physical_device_requirements_t* requirements_,
     wen_vulkan_physical_device_queue_family_info_t*  out_queue_info_,
     wen_vulkan_swapchain_support_info_t*             out_swapchain_support_) {
+
   out_queue_info_->graphics_family_index = -1;
   out_queue_info_->present_family_index  = -1;
   out_queue_info_->compute_family_index  = -1;
   out_queue_info_->transfer_family_index = -1;
+
   if (requirements_->discrete_gpu) {
     if (props_->deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
       return false;
@@ -346,36 +400,34 @@ bool physical_device_meets_requirement(
       return false;
     }
 
-    if (requirements_->device_extension_names) {
+    if (requirements_->device_extensions.count > 0) {
       uint32_t               available_extension_count = 0;
       VkExtensionProperties* available_extension       = nullptr;
-      vkEnumerateDeviceExtensionProperties(device_, nullptr, &available_extension_count, nullptr);
-      if (available_extension_count == 0) {
-        return false;
-      }
 
-      available_extension = (VkExtensionProperties*)wen_memalloc(sizeof(VkExtensionProperties) * available_extension_count, MEMORY_TAG_RENDERER);
-      VkResult result     = vkEnumerateDeviceExtensionProperties(device_, nullptr, &available_extension_count, available_extension);
-      if (result != VK_SUCCESS) {
-        return false;
-      }
+      vk_check(vkEnumerateDeviceExtensionProperties(device_, nullptr, &available_extension_count, nullptr));
+      if (available_extension_count != 0) {
+        available_extension = (VkExtensionProperties*)wen_memalloc(sizeof(VkExtensionProperties) * available_extension_count, MEMORY_TAG_RENDERER);
+        vk_check(vkEnumerateDeviceExtensionProperties(device_, nullptr, &available_extension_count, available_extension));
 
-      uint32_t required_extension_count = vec_len(available_extension);
-      for (uint32_t i = 0; i < required_extension_count; ++i) {
-        bool found = false;
-        for (uint32_t j = 0; j < available_extension_count; ++j) {
-          if (wen_str_eq(requirements_->device_extension_names[i], available_extension[j].extensionName)) {
-            found = true;
-            break;
+//        uint32_t required_extension_count = vec_len(available_extension);
+        for (uint32_t i = 0; i < requirements_->device_extensions.count; ++i) {
+          bool found = false;
+          for (uint32_t j = 0; j < available_extension_count; ++j) {
+            if (wen_str_eq(requirements_->device_extensions.names[i], available_extension[j].extensionName)) {
+              wen_info("found");
+              wen_info(requirements_->device_extensions.names[i]);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            wen_info("[Vulkan Backend] - Required extensions not found %s skipping device.", requirements_->device_extensions.names[i]);
+            return false;
           }
         }
-        if (!found) {
-          wen_info("[Vulkan Backend] - Required extensions not found %s skipping device.", requirements_->device_extension_names[i]);
-          return false;
-        }
-      }
 
-      wen_memfree(available_extension, sizeof(VkExtensionProperties) * available_extension_count, MEMORY_TAG_RENDERER);
+        wen_memfree(available_extension, sizeof(VkExtensionProperties) * available_extension_count, MEMORY_TAG_RENDERER);
+      }
     }
 
     if (requirements_->sampler_anisotropy && !features_->samplerAnisotropy) {
