@@ -1,10 +1,9 @@
-#include "wen/renderer/vulkan/vulkan_device.hpp"
+#include "wen/renderer/vulkan/vulkan_backend.hpp"
 
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
-
 #include "wen/datastructures/wen_strbuf.hpp"
-#include "wen/datastructures/wen_vec.hpp"
 
 typedef struct wen_vulkan_device_extensions_t {
   const char** names;

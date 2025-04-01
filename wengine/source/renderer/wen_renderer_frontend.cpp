@@ -14,7 +14,6 @@ bool renderer_initialize(const char* name_, struct wen_platform_state_t* state_)
     return false;
   }
   backend->frame_count = 0;
-
   return true;
 }
 
@@ -23,7 +22,12 @@ void renderer_shutdown() {
   wen_memfree(backend, sizeof(wen_renderer_backend_t), MEMORY_TAG_RENDERER);
 }
 
-void renderer_on_resized(uint16_t width_, uint16_t height_) {
+void renderer_on_resized(uint16_t width, uint16_t height) {
+  if (!backend) {
+    wen_warn("Renderer backend does not exist to accept resize %i %i", width, height);
+    return;
+  }
+  backend->resize(backend, width, height);
 }
 
 bool renderer_begin_frame(float deltatime) {

@@ -1,5 +1,6 @@
-#include "wen/renderer/vulkan/vulkan_image.hpp"
+#include "wen/renderer/vulkan/vulkan_backend.hpp"
 
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 #include "wen/core/wen_logger.hpp"
 
 void vulkan_image_init(
@@ -60,7 +61,7 @@ void vulkan_image_init(
 
   if (create_view) {
     out_image->view = nullptr;
-    vulkan_image_view_init(context, format, out_image, view_aspect_flags);
+    vulkan_image_view_init(context, format, out_image->handle, &out_image->view, view_aspect_flags);
   }
 }
 
@@ -93,14 +94,15 @@ void vulkan_image_fini(
 void vulkan_image_view_init(
     wen_vulkan_context_t* context,
     VkFormat              format,
-    wen_vulkan_image_t*   image,
+    VkImage               image,
+    VkImageView*          view,
     VkImageAspectFlags    aspect_flags) {
-  VkImageViewCreateInfo image_view_create_info       = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-  image_view_create_info.image                       = image->handle;
-  image_view_create_info.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-  image_view_create_info.format                      = format;
-  image_view_create_info.subresourceRange.aspectMask = aspect_flags;
+  VkImageViewCreateInfo image_view_create_info = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+  image_view_create_info.image                 = image;
+  image_view_create_info.viewType              = VK_IMAGE_VIEW_TYPE_2D;
+  image_view_create_info.format                = format;
 
+  image_view_create_info.subresourceRange.aspectMask     = aspect_flags;
   image_view_create_info.subresourceRange.baseMipLevel   = 0;
   image_view_create_info.subresourceRange.levelCount     = 1;
   image_view_create_info.subresourceRange.baseArrayLayer = 0;
@@ -110,5 +112,5 @@ void vulkan_image_view_init(
       context->devices.logical_device,
       &image_view_create_info,
       context->allocator,
-      &image->view));
+      view));
 }

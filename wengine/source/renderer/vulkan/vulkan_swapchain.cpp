@@ -1,12 +1,10 @@
-#include "wen/renderer/vulkan/vulkan_swapchain.hpp"
+#include "wen/renderer/vulkan/vulkan_backend.hpp"
 
-#include "wen/wen.hpp"
-
-#include "wen/renderer/vulkan/vulkan_device.hpp"
-#include "wen/renderer/vulkan/vulkan_image.hpp"
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
+#include "wen/wen.hpp"
 
 void init(wen_vulkan_context_t* context, uint32_t width, uint32_t height, wen_vulkan_swapchain_t* out_swapchain);
 void fini(wen_vulkan_context_t* context, wen_vulkan_swapchain_t* out_swapchain);
@@ -91,6 +89,7 @@ void vulkan_swapchain_present(
   }
 }
 
+/** Init Swapchain. */
 void init(
     wen_vulkan_context_t*   context,
     uint32_t                width,
@@ -147,12 +146,12 @@ void init(
   VkSwapchainCreateInfoKHR swapchain_create_info = {VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
   swapchain_create_info.surface                  = context->surface;
 
-  swapchain_create_info.minImageCount            = image_count;
-  swapchain_create_info.imageFormat              = out_swapchain->image_format.format;
-  swapchain_create_info.imageColorSpace          = out_swapchain->image_format.colorSpace;
-  swapchain_create_info.imageExtent              = swapchain_extent;
-  swapchain_create_info.imageArrayLayers         = 1;
-  swapchain_create_info.imageUsage               = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swapchain_create_info.minImageCount    = image_count;
+  swapchain_create_info.imageFormat      = out_swapchain->image_format.format;
+  swapchain_create_info.imageColorSpace  = out_swapchain->image_format.colorSpace;
+  swapchain_create_info.imageExtent      = swapchain_extent;
+  swapchain_create_info.imageArrayLayers = 1;
+  swapchain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   /** Find queue families. */
   if (context->devices.graphics_queue_index == context->devices.present_queue_index) {
@@ -164,7 +163,7 @@ void init(
     swapchain_create_info.queueFamilyIndexCount = 2;
     swapchain_create_info.pQueueFamilyIndices   = queue_family_indices;
   } else {
-    swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
 
   swapchain_create_info.preTransform   = context->devices.swapchain_support_info.capabilities.currentTransform;
@@ -172,7 +171,7 @@ void init(
   swapchain_create_info.presentMode    = present_mode;
   swapchain_create_info.clipped        = VK_TRUE;
 
-  swapchain_create_info.oldSwapchain   = VK_NULL_HANDLE;
+  swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
   vk_check(vkCreateSwapchainKHR(
       context->devices.logical_device,
@@ -211,15 +210,16 @@ void init(
     view_create_info.format                          = out_swapchain->image_format.format;
     view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     view_create_info.subresourceRange.baseMipLevel   = 0;
-    view_create_info.subresourceRange.layerCount     = 1;
+    view_create_info.subresourceRange.levelCount     = 1;
     view_create_info.subresourceRange.baseArrayLayer = 0;
     view_create_info.subresourceRange.layerCount     = 1;
 
-    vk_check(vkCreateImageView(
-        context->devices.logical_device,
-        &view_create_info,
-        context->allocator,
-        &out_swapchain->views[i]));
+    vulkan_image_view_init(
+        context,
+        out_swapchain->image_format.format,
+        out_swapchain->images[i],
+        &out_swapchain->views[i],
+        VK_IMAGE_ASPECT_COLOR_BIT);
   }
 
   if (!vulkan_device_detect_depth_format(&context->devices)) {

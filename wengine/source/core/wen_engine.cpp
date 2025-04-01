@@ -24,6 +24,9 @@ typedef struct wen_engine_t {
 
   double last_time;
 
+  uint32_t width;
+  uint32_t height;
+
   wen_point_t          position;
   wen_clock_t          clock;
   wen_game_t*          game_inst;
@@ -32,6 +35,8 @@ typedef struct wen_engine_t {
 
 bool engine_on_event(uint16_t code, void* sender, void* listener, event_context_t ctx);
 bool engine_on_key(uint16_t code, void* sender, void* listener, event_context_t ctx);
+bool engine_on_resize(uint16_t code, void* sender, void* listener, event_context_t ctx);
+bool engine_on_minimize(uint16_t code, void* sender, void* listener, event_context_t ctx);
 
 static bool         initialized = false;
 static wen_engine_t engine_state{};
@@ -45,6 +50,8 @@ bool engine_create(wen_game_t* game_inst) {
 
   engine_state.is_running   = true;
   engine_state.is_suspended = false;
+  engine_state.width        = game_inst->app_config.start_width;
+  engine_state.height       = game_inst->app_config.start_height;
 
   log_system_initialize();
   input_system_initialize();
@@ -57,6 +64,7 @@ bool engine_create(wen_game_t* game_inst) {
   event_register(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, engine_on_event);
   event_register(WEN_EVENT_CODE_BUTTON_RELEASED, nullptr, engine_on_key);
   event_register(WEN_EVENT_CODE_KEY_PRESSED, nullptr, engine_on_key);
+  event_register(WEN_EVENT_CODE_WINDOW_RESIZED, nullptr, engine_on_resize);
 
   if (!platform_init(&engine_state.platform_state, engine_state.title,
                      engine_state.game_inst->app_config.start_width,
@@ -72,9 +80,7 @@ bool engine_create(wen_game_t* game_inst) {
     return false;
   }
 
-  engine_state.game_inst->on_resize(engine_state.game_inst,
-                                    engine_state.game_inst->app_config.start_width,
-                                    engine_state.game_inst->app_config.start_height);
+  engine_state.game_inst->on_resize(engine_state.game_inst, engine_state.width, engine_state.height);
 
   initialized = true;
   return true;
@@ -145,6 +151,7 @@ bool engine_run() {
   event_unregister(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, engine_on_event);
   event_unregister(WEN_EVENT_CODE_BUTTON_RELEASED, nullptr, engine_on_key);
   event_unregister(WEN_EVENT_CODE_KEY_PRESSED, nullptr, engine_on_key);
+  event_unregister(WEN_EVENT_CODE_WINDOW_RESIZED, nullptr, engine_on_resize);
 
   event_system_shutdown();
   input_system_shutdown();
@@ -160,8 +167,10 @@ bool engine_on_event(uint16_t code, void*, void*, event_context_t) {
     engine_state.is_running = false;
     return true;
   }
-  return false;
+
+  return false; /** Event purposely not handled to allow other listeners to get this. */
 }
+
 bool engine_on_key(uint16_t code, void*, void*, event_context_t ctx) {
   if (code == WEN_EVENT_CODE_KEY_PRESSED) {
     uint32_t key_code = ctx.data.u32[0];
@@ -174,6 +183,29 @@ bool engine_on_key(uint16_t code, void*, void*, event_context_t ctx) {
   } else if (code == WEN_EVENT_CODE_BUTTON_RELEASED) {
     return true;
   }
+
+  return false; /** Event purposely not handled to allow other listeners to get this. */
+}
+
+bool engine_on_resize(uint16_t code, void* sender, void* listener, event_context_t ctx) {
+  if (code == WEN_EVENT_CODE_WINDOW_RESIZED) {
+    uint16_t width  = ctx.data.u32[0];
+    uint16_t height = ctx.data.u32[1];
+
+    if (width != engine_state.width || height != engine_state.height) {
+      engine_state.width  = width;
+      engine_state.height = height;
+
+      engine_state.game_inst->on_resize(engine_state.game_inst, width, height);
+      renderer_on_resized(width, height);
+      return true;
+    }
+  }
+
+  return false; /** Event purposely not handled to allow other listeners to get this. */
+}
+
+bool engine_on_minimize(uint16_t code, void* sender, void* listener, event_context_t ctx) {
 
   return false;
 }

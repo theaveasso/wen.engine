@@ -1,13 +1,10 @@
 #include "wen/renderer/vulkan/vulkan_backend.hpp"
 
-#include <SDL3/SDL_vulkan.h>
+
+#include "wen/renderer/vulkan/vulkan_types.inl"
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 
 #include "wen/core/wen_logger.hpp"
-#include "wen/renderer/vulkan/vulkan_device.hpp"
-#include "wen/renderer/vulkan/vulkan_platform.hpp"
-#include "wen/renderer/vulkan/vulkan_swapchain.hpp"
-#include "wen/renderer/vulkan/vulkan_types.inl"
-
 #include "wen/datastructures/wen_strbuf.hpp"
 #include "wen/datastructures/wen_vec.hpp"
 #include "wen/platform/wen_platform.hpp"
@@ -21,6 +18,9 @@ void vulkan_instance_fini();
 
 void debug_utils_messenger_init();
 void debug_utils_messenger_fini();
+
+void vulkan_command_buffers_init(wen_renderer_backend_t* backend);
+void vulkan_command_buffers_fini(wen_renderer_backend_t* backend);
 
 void vulkan_get_required_extensions(const char*** required_extensions);
 bool vulkan_check_validation_layer_support(const char*** validation_layer_names, uint32_t* validation_layer_count);
@@ -56,11 +56,18 @@ bool vulkan_renderer_backend_initialize(wen_renderer_backend_t* backend_, const 
       context.framebuffer_height,
       &context.swapchain);
 
+  vulkan_renderpass_init(
+      &context,
+      0.0f, 0.0f, (float)context.framebuffer_width, (float)context.framebuffer_height,
+      0.0f, 0.0f, 0.2f, 1.0f, 1.0f, 0,
+      &context.main_renderpass);
+
   return true;
 }
 
 void vulkan_renderer_backend_shutdown(wen_renderer_backend_t* backend_) {
-  //  vulkan_swapchain_fini(&context, &context.swapchain);
+  vulkan_renderpass_fini(&context, &context.main_renderpass);
+  vulkan_swapchain_fini(&context, &context.swapchain);
   vulkan_device_fini(&context);
   vulkan_surface_fini(&context);
 #if defined(WEN_DEBUG)
@@ -153,6 +160,26 @@ bool vulkan_check_validation_layer_support(const char*** validation_layer_names,
 #endif
   }
   return true;
+}
+
+void vulkan_command_buffers_init(wen_renderer_backend_t* backend) {
+//  if (!context.graphics_command_buffers) {
+//    context.graphics_command_buffers = (wen_vulkan_command_buffer_t*)vec_reserve(wen_vulkan_command_buffer_t, context.swapchain.image_count);
+//    for (uint32_t i = 0; i < context.swapchain.image_count; ++i) {
+//      wen_memzero(&context.graphics_command_buffers[i], sizeof(wen_vulkan_command_buffer_t));
+//    }
+//  }
+//  for (uint32_t i = 0; i < context.swapchain.image_count; ++i) {
+//    if (context.graphics_command_buffers[i].handle) {
+//      vulkan_command_buffer_free(
+//          &context,
+//          context.devices.graphics_command_pool,
+//          &context.graphics_command_buffers[i]);
+//    }
+//  }
+}
+
+void vulkan_command_buffers_fini(wen_renderer_backend_t* backend) {
 }
 
 void debug_utils_messenger_init() {

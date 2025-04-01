@@ -6,19 +6,10 @@
 #include "wen/core/wen_logger.hpp"
 #include "wen/wen.hpp"
 
-/** @def To check Vulkan function calls in debug mode.
- *
- */
-#if defined(WEN_DEBUG)
-#define vk_check(expr)                           \
-  do {                                           \
-    VkResult err = expr;                         \
-    if (err) {                                   \
-      wen_error("Detected Vulkan error: ", err); \
-      abort();                                   \
-    };                                           \
-  } while (0)
-#endif
+typedef struct wen_vulkan_fence_t {
+  bool    is_signaled;
+  VkFence handle;
+} wen_vulkan_fence_t;
 
 /** Represents a Vulkan image, including its dimensions and memory. */
 typedef struct wen_vulkan_image_t {
@@ -29,6 +20,45 @@ typedef struct wen_vulkan_image_t {
   VkImageView    view;   /**< Vulkan image view. */
   VkDeviceMemory memory; /**< Device memory backing the image. */
 } wen_vulkan_image_t;
+
+typedef enum wen_vulkan_renderpass_state_t {
+  RENDERPASS_STATE_READY,
+  RENDERPASS_STATE_RECORDING,
+  RENDERPASS_STATE_IN_RENDER_PASS,
+  RENDERPASS_STATE_RECORDING_ENDED,
+  RENDERPASS_STATE_SUBMITTED,
+  RENDERPASS_STATE_NOT_ALLOCATED,
+} wen_vulkan_renderpass_state_t;
+
+typedef struct wen_vulkan_renderpass_t {
+  VkRenderPass handle;
+  float        x, y, w, h;
+  float        r, g, b, a;
+
+  float    depth;
+  uint32_t stencil;
+} wen_vulkan_renderpass_t;
+
+typedef enum wen_vulkan_command_buffer_state_t {
+  COMMAND_BUFFER_STATE_READY,
+  COMMAND_BUFFER_STATE_RECORDING,
+  COMMAND_BUFFER_STATE_IN_RENDER_PASS,
+  COMMAND_BUFFER_STATE_RECORDING_ENDED,
+  COMMAND_BUFFER_STATE_SUBMITTED,
+  COMMAND_BUFFER_STATE_NOT_ALLOCATED,
+} wen_vulkan_command_buffer_state_t;
+
+typedef struct wen_vulkan_command_buffer_t {
+  VkCommandBuffer                   handle;
+  wen_vulkan_command_buffer_state_t state;
+} wen_vulkan_command_buffer_t;
+
+typedef struct wen_vulkan_framebuffer_t {
+  uint32_t                 attachment_count;
+  VkImageView*             attachments;
+  wen_vulkan_renderpass_t* renderpass;
+  VkFramebuffer            handle;
+} wen_vulkan_framebuffer_t;
 
 /** Represents a Vulkan swapchain, managing multiple images for rendering. */
 typedef struct wen_vulkan_swapchain_t {
@@ -78,6 +108,8 @@ typedef struct wen_vulkan_device_t {
   VkPhysicalDeviceFeatures            features;
   VkPhysicalDeviceProperties          properties;
   wen_vulkan_swapchain_support_info_t swapchain_support_info;
+
+  VkCommandPool graphics_command_pool;
 } wen_vulkan_device_t;
 
 /**
@@ -94,7 +126,10 @@ typedef struct wen_vulkan_context_t {
   VkSurfaceKHR           surface;
   wen_vulkan_device_t    devices;
 
-  wen_vulkan_swapchain_t swapchain;
+  wen_vulkan_swapchain_t  swapchain;
+  wen_vulkan_renderpass_t main_renderpass;
+
+  wen_vulkan_command_buffer_t* graphics_command_buffers;
 
   bool recreating_swapchain;
   int32_t (*find_memory_index)(uint32_t type_filter, uint32_t property_flags);

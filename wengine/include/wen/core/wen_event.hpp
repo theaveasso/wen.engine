@@ -50,6 +50,8 @@ typedef enum system_event_code {
   WEN_EVENT_CODE_MOUSE_MOVED      = 0x06, /**< Mouse moved. */
   WEN_EVENT_CODE_MOUSE_WHEEL      = 0x07, /**< Mouse wheel. */
   WEN_EVENT_CODE_WINDOW_RESIZED   = 0x08, /**< Resized/resolution changed from the OS. */
+  WEN_EVENT_CODE_WINDOW_MINIMIZED = 0x09, /**< Window minimized changed from the OS. */
+  WEN_EVENT_CODE_WINDOW_MAXIMIZED = 0x10, /**< Window minimized changed from the OS. */
 
   WEN_EVENT_CODE_TOTAL_COUNT = 0xFF,
 } system_event_code;

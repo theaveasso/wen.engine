@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "wen/core/wen_event.hpp"
 #include "wen/core/wen_input.hpp"
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
@@ -30,6 +31,7 @@ bool platform_init(wen_platform_state_t* state_, const char* name_, int32_t widt
 
   SDL_WindowFlags window_flags = 0;
   window_flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+  window_flags |= SDL_WINDOW_RESIZABLE;
   window_flags |= SDL_WINDOW_VULKAN;
 
   SDL_Vulkan_LoadLibrary(nullptr);
@@ -104,6 +106,18 @@ void platform_poll_event() {
     case SDL_EVENT_MOUSE_MOTION:
       input_process_mouse_move((int16_t)event.button.x, (int16_t)event.button.y);
       break;
+    case SDL_EVENT_WINDOW_RESIZED:
+      event_context_t resize_ctx;
+      resize_ctx.data.u32[0] = event.window.data1;
+      resize_ctx.data.u32[1] = event.window.data2;
+      event_fire(WEN_EVENT_CODE_WINDOW_RESIZED, nullptr, resize_ctx);
+      break;
+    case SDL_EVENT_WINDOW_MINIMIZED:
+      event_context_t minimize_ctx;
+      minimize_ctx.data.c[0] = 1;
+      event_fire(WEN_EVENT_CODE_WINDOW_MINIMIZED, nullptr, minimize_ctx);
+      break;
+    case SDL_EVENT_WINDOW_MOVED:
     case SDL_EVENT_MOUSE_WHEEL:
       auto z_delta = (int8_t)(event.wheel.y);
       input_process_mouse_wheel(z_delta < 0 ? -1 : 1);
