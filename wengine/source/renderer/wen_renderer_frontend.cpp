@@ -46,7 +46,7 @@ bool renderer_draw_frame(wen_render_packet_t* packet) {
     return true;
   }
 
-  bool ef_result = backend->end_frame(backend, packet->deltatime);
+  bool ef_result = renderer_end_frame(packet->deltatime);
   if (!ef_result) {
     return false;
   }

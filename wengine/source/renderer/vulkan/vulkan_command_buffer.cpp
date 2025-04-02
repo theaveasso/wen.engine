@@ -67,6 +67,11 @@ void vulkan_command_buffer_end(
   command_buffer->state = COMMAND_BUFFER_STATE_RECORDING_ENDED;
 }
 
+void vulkan_command_buffer_reset(
+    wen_vulkan_command_buffer_t* command_buffer) {
+  command_buffer->state = COMMAND_BUFFER_STATE_READY;
+}
+
 void vulkan_command_buffer_update_submitted(
     wen_vulkan_command_buffer_t* command_buffer) {
   command_buffer->state = COMMAND_BUFFER_STATE_SUBMITTED;

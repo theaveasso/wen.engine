@@ -55,13 +55,10 @@ void platform_get_required_exts_names(const char*** required_extensions_) {
 }
 
 void platform_shutdown(wen_platform_state_t* state_) {
-  auto* state = (sdl_platform_data_t*)state_->internal_state;
-  SDL_WaitForGPUIdle(state->gpu_device);
-  SDL_ReleaseWindowFromGPUDevice(state->gpu_device, state->window);
-  SDL_DestroyGPUDevice(state->gpu_device);
-  SDL_DestroyWindow(state->window);
-  SDL_Quit();
-  wen_memfree(state, sizeof(sdl_platform_data_t), MEMORY_TAG_APPLICATION);
+//  auto* state = (sdl_platform_data_t*)state_->internal_state;
+//  SDL_DestroyWindow(state->window);
+//  SDL_Quit();
+//  wen_memfree(state, sizeof(sdl_platform_data_t), MEMORY_TAG_APPLICATION);
 }
 
 void platform_sleep(uint32_t milliseconds) {

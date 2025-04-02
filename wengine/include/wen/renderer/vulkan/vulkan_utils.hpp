@@ -1,6 +1,8 @@
 #ifndef RENDERER_VULKAN_VULKAN_UTILS_HPP_
 #define RENDERER_VULKAN_VULKAN_UTILS_HPP_
 
+#include <vulkan/vulkan.h>
+
 /** @def To check Vulkan function calls in debug mode.
  *
  */
@@ -15,5 +17,8 @@
   } while (0)
 #endif
 
+bool vk_result_is_success(VkResult result);
+
+const char* vulkan_result_string(VkResult result, bool verbose = false);
 
 #endif // RENDERER_VULKAN_VULKAN_UTILS_HPP_

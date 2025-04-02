@@ -1,9 +1,9 @@
 #include "wen/renderer/vulkan/vulkan_backend.hpp"
 
-#include "wen/renderer/vulkan/vulkan_utils.hpp"
 #include "wen/core/wen_logger.hpp"
 #include "wen/core/wen_memory.hpp"
 #include "wen/datastructures/wen_strbuf.hpp"
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 
 typedef struct wen_vulkan_device_extensions_t {
   const char** names;
@@ -117,10 +117,21 @@ bool vulkan_device_init(wen_vulkan_context_t* context_) {
       0,
       &context_->devices.transfer_queue);
 
+  VkCommandPoolCreateInfo pool_create_info = {VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+  pool_create_info.queueFamilyIndex        = context_->devices.graphics_queue_index;
+  pool_create_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  vk_check(vkCreateCommandPool(
+      context_->devices.logical_device,
+      &pool_create_info,
+      context_->allocator,
+      &context_->devices.graphics_command_pool));
+
   return true;
 }
 
 void vulkan_device_fini(wen_vulkan_context_t* context_) {
+  vkDestroyCommandPool(context_->devices.logical_device, context_->devices.graphics_command_pool, context_->allocator);
+
   context_->devices.graphics_queue = nullptr;
   context_->devices.present_queue  = nullptr;
   context_->devices.transfer_queue = nullptr;
@@ -408,7 +419,7 @@ bool physical_device_meets_requirement(
         available_extension = (VkExtensionProperties*)wen_memalloc(sizeof(VkExtensionProperties) * available_extension_count, MEMORY_TAG_RENDERER);
         vk_check(vkEnumerateDeviceExtensionProperties(device_, nullptr, &available_extension_count, available_extension));
 
-//        uint32_t required_extension_count = vec_len(available_extension);
+        //        uint32_t required_extension_count = vec_len(available_extension);
         for (uint32_t i = 0; i < requirements_->device_extensions.count; ++i) {
           bool found = false;
           for (uint32_t j = 0; j < available_extension_count; ++j) {

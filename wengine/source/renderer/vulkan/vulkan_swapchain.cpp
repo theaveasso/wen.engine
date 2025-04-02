@@ -69,6 +69,7 @@ void vulkan_swapchain_present(
     VkQueue                 present_q,
     VkSemaphore             render_complete_semaphore,
     uint32_t                present_image_index) {
+
   VkPresentInfoKHR present_info   = {VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
   present_info.waitSemaphoreCount = 1;
   present_info.pWaitSemaphores    = &render_complete_semaphore;
@@ -79,14 +80,12 @@ void vulkan_swapchain_present(
 
   VkResult result = vkQueuePresentKHR(present_q, &present_info);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-    vulkan_swapchain_reinit(
-        context,
-        context->framebuffer_width,
-        context->framebuffer_height,
-        swapchain);
+    vulkan_swapchain_reinit(context, context->framebuffer_width, context->framebuffer_height,swapchain);
   } else if (result != VK_SUCCESS) {
     wen_fatal("failed vkAcquireNextImageKHR!");
   }
+
+  context->current_frame = (context->current_frame + 1) % swapchain->max_frames_in_flight;
 }
 
 /** Init Swapchain. */

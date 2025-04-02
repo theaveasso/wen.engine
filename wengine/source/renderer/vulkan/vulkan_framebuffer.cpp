@@ -1,7 +1,7 @@
 #include "wen/renderer/vulkan/vulkan_backend.hpp"
 
-#include "wen/renderer/vulkan/vulkan_utils.hpp"
 #include "wen/core/wen_memory.hpp"
+#include "wen/renderer/vulkan/vulkan_utils.hpp"
 
 void vulkan_framebuffer_init(
     wen_vulkan_context_t*    context,
@@ -10,7 +10,10 @@ void vulkan_framebuffer_init(
     uint32_t                  attachment_count,
     VkImageView*              attachments,
     wen_vulkan_framebuffer_t* out_framebuffer) {
-  out_framebuffer->attachments = (VkImageView*)wen_memalloc(sizeof(VkImageView) * attachment_count, MEMORY_TAG_RENDERER);
+
+  out_framebuffer->attachments =
+      (VkImageView*)wen_memalloc(sizeof(VkImageView) * attachment_count, MEMORY_TAG_RENDERER);
+
   for (uint32_t i = 0; i < attachment_count; ++i) {
     out_framebuffer->attachments[i] = attachments[i];
   }
@@ -35,10 +38,10 @@ void vulkan_framebuffer_init(
 void vulkan_framebuffer_fini(wen_vulkan_context_t* context, wen_vulkan_framebuffer_t* framebuffer) {
   vkDestroyFramebuffer(context->devices.logical_device, framebuffer->handle, context->allocator);
   if (framebuffer->attachments) {
-    wen_memfree(&framebuffer->attachments, sizeof(VkImageView) * framebuffer->attachment_count, MEMORY_TAG_RENDERER);
-    framebuffer->attachments = nullptr;
+    //    wen_memfree(&framebuffer->attachments, sizeof(VkImageView) * framebuffer->attachment_count, MEMORY_TAG_RENDERER);
+    //    framebuffer->attachments = nullptr;
   }
-  framebuffer->handle = nullptr;
+  framebuffer->handle           = nullptr;
   framebuffer->attachment_count = 0;
-  framebuffer->renderpass = nullptr;
+  framebuffer->renderpass       = nullptr;
 }

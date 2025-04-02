@@ -20,7 +20,6 @@ void vulkan_fence_init(
 }
 
 void vulkan_fence_fini(wen_vulkan_context_t* context, wen_vulkan_fence_t* fence) {
-  vkWaitForFences(context->devices.logical_device, 1, &fence->handle, true, UINT32_MAX);
   if (fence->handle) {
     vkDestroyFence(
         context->devices.logical_device,
@@ -37,6 +36,7 @@ void vulkan_fence_reset(wen_vulkan_context_t* context, wen_vulkan_fence_t* fence
         context->devices.logical_device,
         1,
         &fence->handle));
+    fence->is_signaled = false;
   }
 }
 

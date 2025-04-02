@@ -113,13 +113,11 @@ bool engine_run() {
     if (!engine_state.game_inst->update(engine_state.game_inst, (float)deltatime)) {
       wen_error("game update failed, shutting down!");
       engine_state.is_running = false;
-      return false;
     }
 
     if (!engine_state.game_inst->render(engine_state.game_inst, 0)) {
       wen_error("game render failed, shutting down.");
       engine_state.is_running = false;
-      return false;
     }
 
     wen_render_packet_t packet;
@@ -159,7 +157,14 @@ bool engine_run() {
   renderer_shutdown();
   platform_shutdown(&engine_state.platform_state);
 
+  wen_trace("---------------------------------");
+  wen_trace(get_mem_usage_str().c_str());
   return true;
+}
+
+void engine_get_framebuffer_size(uint32_t* width, uint32_t* height) {
+  *width = engine_state.width;
+  *height = engine_state.height;
 }
 
 bool engine_on_event(uint16_t code, void*, void*, event_context_t) {

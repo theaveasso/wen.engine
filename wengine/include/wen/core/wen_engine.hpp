@@ -20,5 +20,6 @@ typedef struct wen_app_config_t {
 /** Engine-related functions. */
 WEN_API bool engine_create(struct wen_game_t* game_inst);
 WEN_API bool engine_run();
+WEN_API void engine_get_framebuffer_size(uint32_t* width, uint32_t* height);
 
 #endif // WEN_CORE_WEN_ENGINE_HPP_

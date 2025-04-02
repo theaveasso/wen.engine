@@ -71,7 +71,8 @@ typedef struct wen_vulkan_swapchain_t {
   VkImageView*       views;        /** */
   VkSurfaceFormatKHR image_format; /** */
 
-  wen_vulkan_image_t depth_attachment; /** */
+  wen_vulkan_image_t        depth_attachment; /** */
+  wen_vulkan_framebuffer_t* frame_buffers;
 } wen_vulkan_swapchain_t;
 
 /**
@@ -118,6 +119,10 @@ typedef struct wen_vulkan_device_t {
 typedef struct wen_vulkan_context_t {
   uint32_t framebuffer_width;
   uint32_t framebuffer_height;
+
+  uint64_t framebuffer_size_generation;
+  uint64_t framebuffer_size_last_generation;
+
   uint32_t image_index;
   uint32_t current_frame;
 
@@ -136,6 +141,13 @@ typedef struct wen_vulkan_context_t {
 #if defined(WEN_DEBUG)
   VkDebugUtilsMessengerEXT debug_messenger;
 #endif
+
+  /** Sync objects. */
+  VkSemaphore*         image_available_semaphores;
+  VkSemaphore*         queue_complete_semaphores;
+  wen_vulkan_fence_t*  in_flight_fence;
+  uint32_t             in_flight_fence_count;
+  wen_vulkan_fence_t** images_in_flight;
 } wen_vulkan_context_t;
 
 #endif // RENDERER_VULKAN_VULKAN_TYPES_INL_
