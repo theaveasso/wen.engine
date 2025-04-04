@@ -1,216 +1,50 @@
-#include "wen/core/wen_engine.hpp"
+#include "wen_engine.hpp"
 
-#include <cmath>
+#include <cassert>
 
-#include "wen/core/wen_clock.hpp"
-#include "wen/core/wen_event.hpp"
-#include "wen/core/wen_input.hpp"
-#include "wen/core/wen_logger.hpp"
-#include "wen/core/wen_memory.hpp"
+#include "wen_logger.hpp"
 
-#include "wen/platform/wen_platform.hpp"
+static WenEngine *engine = nullptr;
 
-#include "wen/renderer/wen_renderer_frontend.hpp"
+static void movement_callback();
+static void eye_movement_callback();
 
-#include "wen/wen_game_type.hpp"
+void engine_init(WenEngine *engine_, WenEngineMode mode) {
+    log_init(core_opts::level);
+    WEN_ABORT(engine == nullptr, "Engine is already initialized!");
 
-typedef struct wen_engine_t {
-  const char* title;
-  uint64_t    flags;
+    engine = engine_;
+    engine->mode = mode;
 
-  bool fullscreen;
-  bool is_running;
-  bool is_suspended;
+    window_init(&engine->window, core_opts::start_width, core_opts::start_height, "Wen Engine");
+    renderer_init(core_opts::renderer, &engine->renderer, &engine->window, "Game", core_opts::start_width, core_opts::start_height);
 
-  double last_time;
-
-  uint32_t width;
-  uint32_t height;
-
-  wen_point_t          position;
-  wen_clock_t          clock;
-  wen_game_t*          game_inst;
-  wen_platform_state_t platform_state;
-} wen_engine_t;
-
-bool engine_on_event(uint16_t code, void* sender, void* listener, event_context_t ctx);
-bool engine_on_key(uint16_t code, void* sender, void* listener, event_context_t ctx);
-bool engine_on_resize(uint16_t code, void* sender, void* listener, event_context_t ctx);
-bool engine_on_minimize(uint16_t code, void* sender, void* listener, event_context_t ctx);
-
-static bool         initialized = false;
-static wen_engine_t engine_state{};
-
-bool engine_create(wen_game_t* game_inst) {
-  if (initialized) {
-    return false;
-  }
-
-  engine_state.game_inst = game_inst;
-
-  engine_state.is_running   = true;
-  engine_state.is_suspended = false;
-  engine_state.width        = game_inst->app_config.start_width;
-  engine_state.height       = game_inst->app_config.start_height;
-
-  log_system_initialize();
-  input_system_initialize();
-
-  if (!event_system_initialize()) {
-    wen_error("fail initializing event system!");
-    return false;
-  }
-
-  event_register(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, engine_on_event);
-  event_register(WEN_EVENT_CODE_BUTTON_RELEASED, nullptr, engine_on_key);
-  event_register(WEN_EVENT_CODE_KEY_PRESSED, nullptr, engine_on_key);
-  event_register(WEN_EVENT_CODE_WINDOW_RESIZED, nullptr, engine_on_resize);
-
-  if (!platform_init(&engine_state.platform_state, engine_state.title,
-                     engine_state.game_inst->app_config.start_width,
-                     engine_state.game_inst->app_config.start_height)) {
-    return false;
-  }
-  if (!renderer_initialize(engine_state.title, &engine_state.platform_state)) {
-    return false;
-  }
-
-  if (!engine_state.game_inst->initialize(engine_state.game_inst)) {
-    wen_error("failed initialize game instance.");
-    return false;
-  }
-
-  engine_state.game_inst->on_resize(engine_state.game_inst, engine_state.width, engine_state.height);
-
-  initialized = true;
-  return true;
+    WEN_INFO("[Engine] successfully initialized!");
 }
 
-bool engine_run() {
-  wen_trace(get_mem_usage_str().c_str());
-
-  clock_start(&engine_state.clock);
-  clock_update(&engine_state.clock);
-  engine_state.last_time = engine_state.clock.elapsed;
-
-  double  running_time = 0;
-  uint8_t frame_count  = 0;
-  float   target_fps   = 1.0 / 60;
-
-  while (engine_state.is_running) {
-    clock_update(&engine_state.clock);
-    double current_time     = engine_state.clock.elapsed;
-    double deltatime        = current_time - engine_state.last_time;
-    double frame_start_time = platform_get_absolute_time();
-
-    if (!platform_is_running()) {
-      engine_state.is_running = false;
-    }
-    if (engine_state.is_suspended) {
-      return false;
-    }
-
-    if (!engine_state.game_inst->update(engine_state.game_inst, (float)deltatime)) {
-      wen_error("game update failed, shutting down!");
-      engine_state.is_running = false;
-    }
-
-    if (!engine_state.game_inst->render(engine_state.game_inst, 0)) {
-      wen_error("game render failed, shutting down.");
-      engine_state.is_running = false;
-    }
-
-    wen_render_packet_t packet;
-    packet.deltatime = (float)deltatime;
-    renderer_draw_frame(&packet);
-
-    double frame_end_time     = platform_get_absolute_time();
-    double frame_elapsed_time = frame_end_time - frame_start_time;
-
-    running_time += frame_elapsed_time;
-    double remaining_seconds = target_fps - frame_elapsed_time;
-    if (remaining_seconds > 0) {
-      uint64_t remaining_ms = (uint64_t)remaining_seconds * 1000;
-      // bool     limit_frames = false;
-      if (remaining_ms > 0 /** && limit_frames */) {
-        platform_sleep((uint32_t)remaining_seconds - 1);
-      }
-    }
-    frame_count++;
-
-    platform_poll_event();
-    input_system_update((float)deltatime);
-
-    engine_state.last_time = current_time;
-  }
-
-  engine_state.is_running = false;
-
-  event_unregister(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, engine_on_event);
-  event_unregister(WEN_EVENT_CODE_BUTTON_RELEASED, nullptr, engine_on_key);
-  event_unregister(WEN_EVENT_CODE_KEY_PRESSED, nullptr, engine_on_key);
-  event_unregister(WEN_EVENT_CODE_WINDOW_RESIZED, nullptr, engine_on_resize);
-
-  event_system_shutdown();
-  input_system_shutdown();
-
-  renderer_shutdown();
-  platform_shutdown(&engine_state.platform_state);
-
-  wen_trace("---------------------------------");
-  wen_trace(get_mem_usage_str().c_str());
-  return true;
+void engine_fini(WenEngine *engine_) {
+    window_fini(&engine_->window);
+    renderer_fini(&engine_->renderer);
+    WEN_INFO("[Engine] successfully shutdown!");
+    log_fini();
 }
 
-void engine_get_framebuffer_size(uint32_t* width, uint32_t* height) {
-  *width = engine_state.width;
-  *height = engine_state.height;
+bool engine_is_running(const WenEngine *engine_) {
+    return (!glfwWindowShouldClose(engine_->window.window));
 }
 
-bool engine_on_event(uint16_t code, void*, void*, event_context_t) {
-  if (code == WEN_EVENT_CODE_APPLICATION_QUIT) {
-    engine_state.is_running = false;
-    return true;
-  }
-
-  return false; /** Event purposely not handled to allow other listeners to get this. */
+void engine_begin_frame() {
+    glfwPollEvents();
 }
 
-bool engine_on_key(uint16_t code, void*, void*, event_context_t ctx) {
-  if (code == WEN_EVENT_CODE_KEY_PRESSED) {
-    uint32_t key_code = ctx.data.u32[0];
-    if (key_code == WEN_KESCAPE) {
-      event_context_t data{};
-      event_fire(WEN_EVENT_CODE_APPLICATION_QUIT, nullptr, data);
-      return true;
-    }
-    return false;
-  } else if (code == WEN_EVENT_CODE_BUTTON_RELEASED) {
-    return true;
-  }
-
-  return false; /** Event purposely not handled to allow other listeners to get this. */
+void engine_end_frame(WenEngine *engine_) {
+    renderer_draw_frame(&engine_->renderer);
 }
 
-bool engine_on_resize(uint16_t code, void* sender, void* listener, event_context_t ctx) {
-  if (code == WEN_EVENT_CODE_WINDOW_RESIZED) {
-    uint16_t width  = ctx.data.u32[0];
-    uint16_t height = ctx.data.u32[1];
-
-    if (width != engine_state.width || height != engine_state.height) {
-      engine_state.width  = width;
-      engine_state.height = height;
-
-      engine_state.game_inst->on_resize(engine_state.game_inst, width, height);
-      renderer_on_resized(width, height);
-      return true;
-    }
-  }
-
-  return false; /** Event purposely not handled to allow other listeners to get this. */
+void engine_enable_features(WenEngine *engine_, WenEngineFeatures features) {
+//    engine_->features |= features;
 }
 
-bool engine_on_minimize(uint16_t code, void* sender, void* listener, event_context_t ctx) {
-
-  return false;
+void engine_disable_features(WenEngine *engine_, WenEngineFeatures features) {
+//    engine_->features &= ~features;
 }

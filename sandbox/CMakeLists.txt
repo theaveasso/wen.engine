@@ -14,4 +14,4 @@ set(WEN_SOURCES ${SOURCES} ${HEADERS})
 
 add_executable(${PROJECT_NAME} ${WEN_SOURCES})
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE wen_engine flecs SDL3::SDL3 imgui)
+target_link_libraries("${PROJECT_NAME}" PRIVATE wen_engine)

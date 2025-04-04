@@ -1,12 +1,16 @@
----
 BasedOnStyle: LLVM
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: InlineOnly
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments: true
-AlignTrailingComments: true
-ColumnLimit: 0
+IndentWidth: 4
+TabWidth: 4
+ColumnLimit: 150
+NamespaceIndentation: All
 PointerAlignment: Left
-SortIncludes: CaseSensitive
-TabWidth: 2
-...
+AlignArrayOfStructures: Left
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  #AcrossComments: true
+  #AlignFunctionPointers: true
+AlignConsecutiveAssignments: true
+#BinPackArguments: false
+#BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: true
