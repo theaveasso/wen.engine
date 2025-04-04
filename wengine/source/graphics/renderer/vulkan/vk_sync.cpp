@@ -88,7 +88,7 @@ void vk_fence_fini(
     );
 }
 
-void vk_image_memory_barrie_insert(
+void vk_image_memory_barrier_insert(
     VkCommandBuffer cmd_buf,
     VkImage image,
     VkImageLayout current_layout,
@@ -132,4 +132,3 @@ void vk_image_memory_barrie_insert(
         &dependency_info
     );
 }
-

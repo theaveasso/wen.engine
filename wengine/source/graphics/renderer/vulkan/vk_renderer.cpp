@@ -161,7 +161,7 @@ bool vk_renderer_end_frame(WenRendererBackend *renderer, float dt) {
         VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         vk_renderer.images[vk_renderer.current_frame_index].image,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -188,21 +188,21 @@ bool vk_renderer_end_frame(WenRendererBackend *renderer, float dt) {
         &range
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         vk_renderer.images[vk_renderer.current_frame_index].image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_GENERAL
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         vk_renderer.color_image.image,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         vk_renderer.depth_image.image,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -220,23 +220,29 @@ bool vk_renderer_end_frame(WenRendererBackend *renderer, float dt) {
         cmd_buf
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         vk_renderer.color_image.image,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
     );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         swapchain_image,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
     );
 
-    // blit image
+    vk_image_blit(
+        cmd_buf,
+        vk_renderer.color_image.image,
+        swapchain_image,
+        vk_renderer.swapchain_context.extent,
+        vk_renderer.image_extent
+    );
 
-    vk_image_memory_barrie_insert(
+    vk_image_memory_barrier_insert(
         cmd_buf,
         swapchain_image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,

@@ -1,5 +1,7 @@
 #include "vk_image.hpp"
 
+#include "privates/wen_private_defines.hpp"
+
 #include "vk_utils.hpp"
 #include "vk_types.hpp"
 #include <vk_mem_alloc.h>
@@ -137,4 +139,52 @@ VkImageSubresourceRange vk_image_subresource_range_init(
     subresource_range.layerCount     = layer_count;
 
     return subresource_range;
+}
+
+void
+vk_image_blit(
+    VkCommandBuffer cmd,
+    VkImage src,
+    VkImage dst,
+    VkExtent2D src_extent,
+    VkExtent2D dst_extent,
+    uint32_t src_mip_levels,
+    uint32_t dst_mip_levels,
+    uint32_t src_layer_count,
+    uint32_t dst_layer_count
+) {
+    VkImageBlit2 blit_region = {VK_STRUCTURE_TYPE_IMAGE_BLIT_2};
+    blit_region.srcOffsets[0] = {0, 0, 0};
+    blit_region.srcOffsets[1].x = WEN_CAST(int32_t, src_extent.width);
+    blit_region.srcOffsets[1].y = WEN_CAST(int32_t, src_extent.height);
+    blit_region.srcOffsets[1].z = 1;
+
+    blit_region.dstOffsets[0] = {0, 0, 0};
+    blit_region.dstOffsets[1].x = WEN_CAST(int32_t, dst_extent.width);
+    blit_region.dstOffsets[1].y = WEN_CAST(int32_t, dst_extent.height);
+    blit_region.dstOffsets[1].z = 1;
+
+    blit_region.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit_region.srcSubresource.baseArrayLayer = 0;
+    blit_region.srcSubresource.layerCount     = src_layer_count;
+    blit_region.srcSubresource.mipLevel       = src_mip_levels;
+
+    blit_region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit_region.dstSubresource.baseArrayLayer = 0;
+    blit_region.dstSubresource.layerCount     = dst_layer_count;
+    blit_region.dstSubresource.mipLevel       = dst_mip_levels;
+
+    VkBlitImageInfo2 blit_image_info = {VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2};
+    blit_image_info.dstImage       = dst;
+    blit_image_info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    blit_image_info.srcImage       = src;
+    blit_image_info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    blit_image_info.filter         = VK_FILTER_LINEAR;
+    blit_image_info.regionCount    = 1;
+    blit_image_info.pRegions       = &blit_region;
+
+    vkCmdBlitImage2(
+        cmd,
+        &blit_image_info
+    );
 }
