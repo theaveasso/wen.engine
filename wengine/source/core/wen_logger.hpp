@@ -1,8 +1,6 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <string_view>
+#include "privates/wen_pch.hpp"
 
 #define WEN_LEVEL_TRACE 0
 #define WEN_LEVEL_DEBUG 1

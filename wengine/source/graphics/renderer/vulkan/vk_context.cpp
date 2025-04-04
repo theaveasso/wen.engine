@@ -91,6 +91,8 @@ static VkInstance vk_instance_init(
         nullptr,
         &instance
     ));
+
+    WEN_DEBUG("[Renderer] Vulkan instance successfully created!");
     return instance;
 }
 

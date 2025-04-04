@@ -28,7 +28,6 @@ add_library(${PROJECT_NAME} SHARED ${WEN_SOURCES})
 target_include_directories(
         ${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/source
-        ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/imgui
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/glm
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/glfw
         ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/spdlog
@@ -37,6 +36,8 @@ target_include_directories(
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VULKAN_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw glm spdlog::spdlog GPUOpen::VulkanMemoryAllocator)
+
+target_precompile_headers(${PROJECT_NAME} PUBLIC "source/privates/wen_pch.hpp")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
