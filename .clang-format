@@ -1,16 +1,22 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
-ColumnLimit: 150
+ColumnLimit: 80
 NamespaceIndentation: All
-PointerAlignment: Left
+PointerAlignment: Right
 AlignArrayOfStructures: Left
 AlignConsecutiveDeclarations:
   Enabled: true
   AcrossEmptyLines: false
-  #AcrossComments: true
-  #AlignFunctionPointers: true
+  AcrossComments: true
+  AlignFunctionPointers: true
 AlignConsecutiveAssignments: true
-#BinPackArguments: false
-#BinPackParameters: false
+BinPackArguments: false
+BinPackParameters: false
+AllowShortFunctionsOnASingleLine: None
 AllowAllParametersOfDeclarationOnNextLine: true
+AlignAfterOpenBracket: AlwaysBreak
+AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterDefinitionReturnType: All
+PenaltyBreakBeforeFirstCallParameter: 3
+BreakConstructorInitializers: BeforeComma
