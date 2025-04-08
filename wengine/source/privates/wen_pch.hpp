@@ -15,7 +15,9 @@
 #include <array>
 #include <vector>
 
+#include <cstdlib>
 #include <filesystem>
+
 #include <optional>
 #include <set>
 #include <span>
