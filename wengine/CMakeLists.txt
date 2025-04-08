@@ -35,21 +35,8 @@ macro(fetch_dep name repo tag)
     endif ()
 endmacro()
 
-set(GLSLANG_TESTS OFF CACHE BOOL "GLSLANG disable tests" FORCE)
-set(ENABLE_OPT 0 CACHE BOOL "Disable SPIR-V optimization tools" FORCE)
-set(SPIRV_SKIP_EXECUTABLES ON CACHE BOOL "SPIRV disable executables" FORCE)
-set(SPIRV_SKIP_TESTS ON CACHE BOOL "SPIRV disable tests" FORCE)
-set(SPIRV_CHECK_CONTEXT OFF CACHE BOOL "SPIRV disable check context" FORCE)
-set(SPIRV_HEADERS_ENABLE_TESTS OFF CACHE BOOL "SPIRV Headers disable tests" FORCE)
-set(SHADERC_SKIP_TESTS ON CACHE BOOL "Shaderc disable tests" FORCE)
-set(SHADERC_SKIP_EXAMPLES OFF CACHE BOOL "Shaderc disable examples" FORCE)
-
 # TODO: Use this fetch_dep(vulkan-headers https://github.com/KhronosGroup/Vulkan-Headers.git main)
-fetch_dep(glslang https://github.com/KhronosGroup/glslang.git main)
-fetch_dep(spirv-tools https://github.com/KhronosGroup/SPIRV-Tools.git main)
-fetch_dep(spirv-headers https://github.com/KhronosGroup/SPIRV-Headers.git main)
 fetch_dep(vk_mem_alloc https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git master)
-fetch_dep(shaderc https://github.com/google/shaderc.git main)
 
 file(GLOB_RECURSE SOURCES source/*.cpp source/*.hpp)
 set(WEN_SOURCES ${SOURCES})
@@ -70,10 +57,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         glfw
         glm
         spdlog::spdlog
-        SPIRV-Headers::SPIRV-Headers
-        glslang
         GPUOpen::VulkanMemoryAllocator
-        shaderc
 )
 
 if (NOT MSVC)
@@ -86,14 +70,32 @@ endif ()
 target_precompile_headers(${PROJECT_NAME} PUBLIC "source/privates/wen_pch.hpp")
 
 # ---------------------------------------------------
-# Asset Copy
+# Compile shaders Target
 # ---------------------------------------------------
-set(ASSET_SRC_DIR "${CMAKE_SOURCE_DIR}/etc")
-set(ASSET_DST_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/etc")
-add_custom_command(
-        OUTPUT ${ASSET_DST_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${ASSET_SRC_DIR} ${ASSET_DST_DIR}
-        COMMENT "Copying shader assets to bin folder..."
-)
-add_custom_target(copy_assets ALL DEPENDS ${ASSET_DST_DIR})
-add_dependencies(${PROJECT_NAME} copy_assets)
+set(SHADERS_SRC_DIR "${CMAKE_SOURCE_DIR}/shaders")
+set(SHADERS_DST_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/shaders")
+file(GLOB_RECURSE GLSL_SHADERS "${SHADERS_SRC_DIR}/*.glsl")
+
+set(SPIRV_OUTPUTS "")
+
+foreach (SHADER ${GLSL_SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    set(SPIRV_FILE "${SHADERS_DST_DIR}/${FILE_NAME}.spv")
+    if (FILE_NAME MATCHES "\\.vert\\.")
+        set(SHADER_STAGE "vert")
+    elseif (FILE_NAME MATCHES "\\.frag\\.")
+        set(SHADER_STAGE "frag")
+    else ()
+        message(FATAL_ERROR "Unknown shader stage for ${FILE_NAME}")
+    endif ()
+    add_custom_command(
+            OUTPUT ${SPIRV_FILE}
+            COMMAND ${GLSLC_EXECUTABLE} -fshader-stage=${SHADER_STAGE} ${SHADER} -o ${SPIRV_FILE}
+            COMMENT "Compiling ${FILE_NAME} to SPIR-V..."
+            VERBATIM
+    )
+
+    list(APPEND SPIRV_OUTPUTS ${SPIRV_FILE})
+endforeach ()
+
+add_custom_target(compile_shaders ALL DEPENDS ${SPIRV_OUTPUTS})

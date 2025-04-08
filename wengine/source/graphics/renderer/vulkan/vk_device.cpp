@@ -1,5 +1,7 @@
 #include "vk_device.hpp"
 
+#include "vk_utils.hpp"
+
 VkPhysicalDevice
     vk_physical_device_init(VkInstance instance)
 {
@@ -136,10 +138,9 @@ WenDeviceQueueFamilies vk_queue_families_get(
 	return queue_families;
 }
 
-VkDevice
-    vk_logical_device_init(
-        VkPhysicalDevice              physical_device,
-        const WenDeviceQueueFamilies *queue_families)
+VkDevice vk_logical_device_init(
+    VkPhysicalDevice              physical_device,
+    const WenDeviceQueueFamilies *queue_families)
 {
 	std::set unique_family_indices{
 	    queue_families->graphics,
@@ -161,31 +162,52 @@ VkDevice
 
 	constexpr std::array device_extensions = {
 	    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-	    VK_KHR_SPIRV_1_4_EXTENSION_NAME,
-	    VK_EXT_SHADER_OBJECT_EXTENSION_NAME};
+	};
 
-	VkPhysicalDeviceShaderObjectFeaturesEXT shader_object_feature = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT};
-	shader_object_feature.shaderObject                            = VK_TRUE;
+	// query features
+	VkPhysicalDeviceFeatures2                       query_device_feature2             = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	VkPhysicalDeviceVulkan13Features                query_device_vulkan_13_features   = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT query_extended_dyn_state_features = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT};
+	query_device_feature2.pNext                                                       = &query_device_vulkan_13_features;
+	query_device_vulkan_13_features.pNext                                             = &query_extended_dyn_state_features;
 
-	VkPhysicalDeviceVulkan13Features features_1_3                 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
-	features_1_3.synchronization2                                 = VK_TRUE;
-	features_1_3.dynamicRendering                                 = VK_TRUE;
-	features_1_3.pNext                                            = &shader_object_feature;
+	vkGetPhysicalDeviceFeatures2(physical_device, &query_device_feature2);
 
-	VkPhysicalDeviceVulkan12Features features_1_2                 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
-	features_1_2.bufferDeviceAddress                              = VK_TRUE;
-	features_1_2.pNext                                            = &features_1_3;
+	if (!query_device_vulkan_13_features.dynamicRendering)
+	{
+		throw std::runtime_error("Dynamic Rendering Feature is missing!");
+	}
+	if (!query_device_vulkan_13_features.synchronization2)
+	{
+		throw std::runtime_error("Synchronization2 Feature is missing!");
+	}
+	if (!query_extended_dyn_state_features.extendedDynamicState)
+	{
+		throw std::runtime_error("Extended Dynamic State Feature is missing!");
+	}
 
-	VkPhysicalDeviceFeatures features_1_0                         = {};
-	features_1_0.samplerAnisotropy                                = VK_TRUE;
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT features_extend_dynamic = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT};
+	features_extend_dynamic.extendedDynamicState                            = VK_TRUE;
 
-	VkDeviceCreateInfo device_create_info                         = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-	device_create_info.pQueueCreateInfos                          = queue_infos.data();
-	device_create_info.queueCreateInfoCount                       = queue_infos.size();
-	device_create_info.ppEnabledExtensionNames                    = device_extensions.data();
-	device_create_info.enabledExtensionCount                      = device_extensions.size();
-	device_create_info.pEnabledFeatures                           = &features_1_0;
-	device_create_info.pNext                                      = &features_1_2;
+	VkPhysicalDeviceVulkan13Features features_1_3                           = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+	features_1_3.synchronization2                                           = VK_TRUE;
+	features_1_3.dynamicRendering                                           = VK_TRUE;
+	features_1_3.pNext                                                      = &features_extend_dynamic;
+
+	VkPhysicalDeviceVulkan12Features features_1_2                           = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+	features_1_2.bufferDeviceAddress                                        = VK_TRUE;
+	features_1_2.pNext                                                      = &features_1_3;
+
+	VkPhysicalDeviceFeatures features_1_0                                   = {};
+	features_1_0.samplerAnisotropy                                          = VK_TRUE;
+
+	VkDeviceCreateInfo device_create_info                                   = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+	device_create_info.pQueueCreateInfos                                    = queue_infos.data();
+	device_create_info.queueCreateInfoCount                                 = queue_infos.size();
+	device_create_info.ppEnabledExtensionNames                              = device_extensions.data();
+	device_create_info.enabledExtensionCount                                = device_extensions.size();
+	device_create_info.pEnabledFeatures                                     = &features_1_0;
+	device_create_info.pNext                                                = &features_1_2;
 
 	VkDevice device;
 	vk_check(vkCreateDevice(

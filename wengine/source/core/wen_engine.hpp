@@ -6,30 +6,30 @@
 
 #include "platform/wen_desktop_glfw.hpp"
 
-#include "graphics/renderer/wen_renderer_ft.hpp"
 #include "graphics/renderer/vulkan/vk_context.hpp"
 #include "graphics/renderer/vulkan/vk_renderer.hpp"
+#include "graphics/renderer/wen_renderer_ft.hpp"
 
 enum struct WenEngineMode
 {
-  EDIT,
-  RELEASE
+	EDIT,
+	RELEASE
 };
 
 enum struct WenEngineFeatures
 {
-  NONE           = 0,
-  DEBUG_GRID     = 1 << 1,
-  SKY_BOX        = 1 << 2,
-  ENTITY_PICKING = 1 << 3,
+	NONE           = 0,
+	DEBUG_GRID     = 1 << 1,
+	SKY_BOX        = 1 << 2,
+	ENTITY_PICKING = 1 << 3,
 };
 
 struct WenEngine
 {
-  WenWindow   window;
-  WenRenderer renderer;
-  WenEngineMode     mode;
-  WenEngineFeatures features{WenEngineFeatures::NONE};
+	WenWindow         window;
+	WenRenderer       renderer;
+	WenEngineMode     mode     = {WenEngineMode::RELEASE};
+	WenEngineFeatures features = {WenEngineFeatures::NONE};
 };
 
 WEN_API void engine_init(WenEngine *engine, WenEngineMode mode);

@@ -4,10 +4,15 @@
 #include "privates/wen_pch.hpp"
 
 #include "vk_command_buffer.hpp"
+#include "vk_ext.hpp"
 #include "vk_frame_buffer.hpp"
 #include "vk_image.hpp"
 #include "vk_pipeline.hpp"
+#include "vk_shader.hpp"
 #include "vk_swapchain.hpp"
+
+#include <glm/vec2.hpp>
+#include <vk_mem_alloc.h>
 
 struct WenShaderIndices
 {
@@ -57,8 +62,8 @@ struct WenVkRenderer
 	WenVkPipelineInfo     opaque_pipeline_info{};
 	WenVkPipelineInfo     transparent_pipeline_info{};
 
-	WenVkShaderContext vk_shader_ctx;
-	WenShaderIndices   shader_indices;
+	WenVkObjectShader vk_object_shader;
+	WenShaderIndices  shader_indices;
 
 	WenVkSwapchainContext              swapchain_context;
 	VmaAllocator                       allocator{};
@@ -74,7 +79,7 @@ struct WenVkRenderer
 
 bool vk_renderer_init(
     WenRendererBackend *renderer,
-    WenWindow          *window,
+    WenWindow          &window,
     const char         *app_name,
     int32_t             width,
     int32_t             height);

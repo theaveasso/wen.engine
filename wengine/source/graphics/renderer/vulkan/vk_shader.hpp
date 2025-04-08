@@ -1,67 +1,25 @@
 #pragma once
 
-#include <privates/wen_pch.hpp>
+#include "privates/wen_pch.hpp"
 
-#include "vk_ext.hpp"
+#include "vk_context.hpp"
+#include "vk_pipeline.hpp"
+#include "vk_swapchain.hpp"
 
-#define BUILTIN_OBJECT_SHADER "JJK"
+#define OBJECT_SHADER_STAGE_COUNT 2
 
-struct WenVkShader
+struct WenVkShaderStage
 {
-	std::string           name = "unnamed shader";
-	std::string           path;
-	VkShaderEXT           shader = VK_NULL_HANDLE;
-	VkShaderStageFlagBits stage;
-	VkShaderCreateInfoEXT shader_create_info;
+	VkShaderModule                  shader_module = VK_NULL_HANDLE;
+	VkPipelineShaderStageCreateInfo stage         = {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
 };
 
-struct WenVkShaderBuilder
+struct WenVkObjectShader
 {
-	std::vector<VkShaderCreateInfoEXT> create_infos;
-	std::vector<std::vector<uint32_t>> spvs;
-	std::vector<std::string>           names;
-	std::vector<std::string>           paths;
-	shaderc_compiler_t                 compiler{};
-	shaderc_compile_options_t          shaderc_compile_options{};
+	WenVkPipelineInfo                                       pipeline_info;
+	std::array<WenVkShaderStage, OBJECT_SHADER_STAGE_COUNT> shader_stages;
 };
 
-struct WenVkShaderContext
-{
-	std::vector<WenVkShader> vert_shaders;
-	std::vector<WenVkShader> frag_shaders;
-	WenVkShaderBuilder       builder;
-};
+bool wen_vk_shader_object_init(VkDevice device, VkFormat format, WenVkObjectShader *object_shader);
 
-enum struct WenVkShaderType
-{
-	LINKED,
-	UNLINKED
-};
-
-void vk_shader_ctx_init(
-    WenVkShaderContext *shader_ctx);
-
-void vk_shader_ctx_fini(
-    VkDevice                  device,
-    const WenVkShaderContext *shader_ctx,
-    const WenVkEXTContext    *ext_ctx);
-
-void vk_shader_ctx_stage_shader(
-    WenVkShaderContext              *shader_ctx,
-    const std::filesystem::path     &filename,
-    std::string_view                 name,
-    std::span<VkDescriptorSetLayout> desc_set_layouts,
-    std::span<VkPushConstantRange>   push_constant_ranges,
-    VkShaderStageFlagBits            stage,
-    VkShaderStageFlags               next_stage);
-
-void vk_shader_ctx_commit_shader(
-    VkDevice               device,
-    WenVkShaderContext    *shader_ctx,
-    const WenVkEXTContext *ext_ctx,
-    WenVkShaderType        type);
-
-void shader_ctx_replace_shader(
-    VkDevice               device,
-    WenVkShaderContext    *shader_ctx,
-    const WenVkEXTContext *ext_ctx);
+void wen_vk_shader_object_fini(VkDevice device, WenVkObjectShader *object_shader);

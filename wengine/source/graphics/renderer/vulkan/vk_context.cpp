@@ -3,6 +3,7 @@
 #include "vk_debug.hpp"
 #include "vk_device.hpp"
 #include "vk_options.hpp"
+#include "vk_utils.hpp"
 
 #include <platform/wen_desktop_glfw.hpp>
 
@@ -12,7 +13,7 @@ static VkInstance vk_instance_init(const char *app_name);
 
 void vk_context_init(
     WenVkContext    *vk_ctx,
-    const WenWindow *window,
+    const WenWindow &window,
     const char      *app_name)
 {
 	vk_ctx->instance        = vk_instance_init(app_name);

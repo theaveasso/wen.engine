@@ -2,16 +2,28 @@
 
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <vk_mem_alloc.h>
 
 #include "vk_options.hpp"
 #include "vk_sync.hpp"
+#include "vk_utils.hpp"
 
 using namespace std::chrono;
 
 static WenVkRenderer vk_renderer;
 
+static bool vk_renderer_prepare();
+static void vk_renderer_update();
+static void vk_renderer_resize();
+
+bool vk_renderer_prepare(const WenWindow &window, std::string app_name)
+{
+	vk_context_init(&vk_renderer.vk_ctx, window, app_name.c_str());
+
+	return true;
+}
 static void resize();
 static void update_current_frame_index();
 static void set_renderer_state(VkCommandBuffer command_buffer);
@@ -19,18 +31,9 @@ static void set_renderer_state(VkCommandBuffer command_buffer);
 static void allocator_init();
 static void allocator_fini();
 
-static void default_data_init();
-static void desc_layout_init();
-static void graphics_desc_init();
-static void scene_desc_init();
-static void grid_pipeline_init();
-static void pipeline_layouts_init();
 static void render_images_init();
 static void render_images_fini();
 static void configure_render_resources();
-
-static void renderer_upload_vert_shader();
-static void renderer_upload_frag_shader();
 
 static void frames_init();
 static void frames_fini();
@@ -49,7 +52,7 @@ struct WenMeshData
 
 bool vk_renderer_init(
     WenRendererBackend *,
-    WenWindow  *window,
+    WenWindow  &window,
     const char *app_name,
     int32_t     width,
     int32_t     height)
@@ -80,10 +83,13 @@ bool vk_renderer_init(
 
 	// initialize Vulkan extensions context
 	vk_ext_ctx_init(vk_renderer.vk_ctx.logical_device, &vk_renderer.vk_ext);
-	vk_shader_ctx_init(&vk_renderer.vk_shader_ctx);
 
-	renderer_upload_vert_shader();
-	renderer_upload_frag_shader();
+	wen_vk_shader_object_init(
+	    vk_renderer.vk_ctx.logical_device,
+	    vk_renderer.swapchain_context.format,
+	    &vk_renderer.vk_object_shader);
+	//	renderer_upload_vert_shader();
+	//	renderer_upload_frag_shader();
 
 	return true;
 }
@@ -91,11 +97,6 @@ bool vk_renderer_init(
 void vk_renderer_fini(WenRendererBackend *)
 {
 	vkDeviceWaitIdle(vk_renderer.vk_ctx.logical_device);
-
-	vk_shader_ctx_fini(
-	    vk_renderer.vk_ctx.logical_device,
-	    &vk_renderer.vk_shader_ctx,
-	    &vk_renderer.vk_ext);
 
 	render_images_fini();
 	command_buffers_fini();
@@ -506,64 +507,6 @@ void command_buffers_fini()
 	    &vk_renderer.vk_ctx,
 	    vk_renderer.vk_ctx.logical_device,
 	    &vk_renderer.compute_cmd_ctx);
-}
-
-void renderer_upload_vert_shader()
-{
-	WenVkShaderBuilder builder;
-	std::array         push_constant_ranges = {
-        VkPushConstantRange{
-	                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	                .offset     = 0,
-	                .size       = sizeof(WenMeshData)}};
-	std::array set_layouts = {
-	    vk_renderer.scene_desc_set_layout,
-	    vk_renderer.graphics_desc_set_layout,
-	};
-
-	vk_shader_ctx_stage_shader(
-	    &vk_renderer.vk_shader_ctx,
-	    (std::filesystem::current_path() / "etc/shaders/Builtin.ObjectShader.vert.glsl").string(),
-	    "Builtin.ObjectShader.vert",
-	    set_layouts,
-	    push_constant_ranges,
-	    VK_SHADER_STAGE_VERTEX_BIT,
-	    0);
-
-	vk_shader_ctx_commit_shader(
-	    vk_renderer.vk_ctx.logical_device,
-	    &vk_renderer.vk_shader_ctx,
-	    &vk_renderer.vk_ext,
-	    WenVkShaderType::UNLINKED);
-}
-
-void renderer_upload_frag_shader()
-{
-	WenVkShaderBuilder builder;
-	std::array         push_constant_ranges = {
-        VkPushConstantRange{
-	                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	                .offset     = 0,
-	                .size       = sizeof(WenMeshData)}};
-	std::array set_layouts = {
-	    vk_renderer.scene_desc_set_layout,
-	    vk_renderer.graphics_desc_set_layout,
-	};
-
-	vk_shader_ctx_stage_shader(
-	    &vk_renderer.vk_shader_ctx,
-	    (std::filesystem::current_path() / "etc/shaders/Builtin.ObjectShader.frag.glsl").string(),
-	    "Builtin.ObjectShader.vert",
-	    set_layouts,
-	    push_constant_ranges,
-	    VK_SHADER_STAGE_FRAGMENT_BIT,
-	    0);
-
-	vk_shader_ctx_commit_shader(
-	    vk_renderer.vk_ctx.logical_device,
-	    &vk_renderer.vk_shader_ctx,
-	    &vk_renderer.vk_ext,
-	    WenVkShaderType::UNLINKED);
 }
 
 void resize()
