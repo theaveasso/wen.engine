@@ -3,6 +3,7 @@
 #include "graphics/renderer/wen_renderer_types.hpp"
 #include "privates/wen_pch.hpp"
 
+#include "vk_buffer.hpp"
 #include "vk_command_buffer.hpp"
 #include "vk_ext.hpp"
 #include "vk_frame_buffer.hpp"
@@ -37,39 +38,24 @@ struct WenRenderArea
 
 struct WenVkRenderer
 {
-	WenVkContext    vk_ctx{};
-	WenVkEXTContext vk_ext{};
-	VkExtent2D      image_extent{};
-	WenRenderArea   render_area;
-
-	WenVkAllocatedImage depth_image;
-	WenVkAllocatedImage color_image;
-
-	VkClearValue scene_clear_value{};
-
-	VkRenderingInfo           scene_rendering_info{};
-	VkRenderingAttachmentInfo scene_image_attachment{};
-	VkRenderingAttachmentInfo scene_color_attachment{};
-	VkRenderingAttachmentInfo scene_depth_attachment{};
-
-	std::vector<VkDescriptorSet>     viewport_desc_sets;
-	std::vector<WenVkAllocatedImage> viewport_images;
-
-	VkDescriptorSetLayout graphics_desc_set_layout;
-	VkDescriptorSetLayout scene_desc_set_layout;
-	VkPipelineLayout      geometry_pipeline_layout;
-	VkPipelineLayout      skybox_pipeline_layout;
-	WenVkPipelineInfo     opaque_pipeline_info{};
-	WenVkPipelineInfo     transparent_pipeline_info{};
-
-	WenVkObjectShader vk_object_shader;
-	WenShaderIndices  shader_indices;
-
+	WenVkContext                       vk_ctx{};
+	WenVkEXTContext                    vk_ext{};
+	VkExtent2D                         image_extent{};
+	WenRenderArea                      render_area;
+	WenVkAllocatedImage                depth_image;
+	WenVkAllocatedImage                color_image;
+	VkRenderingInfo                    scene_rendering_info{};
+	VkRenderingAttachmentInfo          scene_color_attachment{};
+	VkRenderingAttachmentInfo          scene_depth_attachment{};
+	std::vector<VkDescriptorSet>       viewport_desc_sets;
+	std::vector<WenVkAllocatedImage>   viewport_images;
+	WenVkObjectShader                  vk_object_shader;
 	WenVkSwapchainContext              swapchain_context;
 	VmaAllocator                       allocator{};
-	VkFence                            immediate_fence{};
 	WenVkCommandContext                immediate_cmd_ctx{};
 	WenVkCommandContext                compute_cmd_ctx{};
+	WenVkBuffer                        vertex_buffer;
+	WenVkBuffer                        index_buffer;
 	uint64_t                           frame_number = 1;
 	uint8_t                            current_frame_index{};
 	std::array<WenVkAllocatedImage, 3> images{};

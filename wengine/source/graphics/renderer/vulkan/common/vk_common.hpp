@@ -18,7 +18,16 @@ const std::vector<WenVertex> vertices = {
     {{0.5, -0.5f, 0.0}, {1.0f, 0.0f, 0.0f}},
     {{0.5, 0.5f, 0.0}, {0.0f, 1.0f, 0.0f}},
     {{-0.5, 0.5f, 0.0}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5, -0.5f, 0.0}, {1.0f, 0.0f, 1.0f}},
 };
+
+const std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+
+/// @brief Find a suitable memory type index for allocating memory.
+uint32_t wen_find_memory_type(
+    VkPhysicalDevice gpu,
+    uint32_t         type_filter,
+    int              properties);
 
 /**
  * @brief Helper function to create a VkShaderModule

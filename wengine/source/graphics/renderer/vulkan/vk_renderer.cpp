@@ -6,6 +6,7 @@
 
 #include <vk_mem_alloc.h>
 
+#include "graphics/renderer/vulkan/common/vk_common.hpp"
 #include "vk_options.hpp"
 #include "vk_sync.hpp"
 #include "vk_utils.hpp"
@@ -14,16 +15,6 @@ using namespace std::chrono;
 
 static WenVkRenderer vk_renderer;
 
-static bool vk_renderer_prepare();
-static void vk_renderer_update();
-static void vk_renderer_resize();
-
-bool vk_renderer_prepare(const WenWindow &window, std::string app_name)
-{
-	vk_context_init(&vk_renderer.vk_ctx, window, app_name.c_str());
-
-	return true;
-}
 static void resize();
 static void update_current_frame_index();
 static void set_renderer_state(VkCommandBuffer command_buffer);
@@ -40,15 +31,6 @@ static void frames_fini();
 
 static void command_buffers_init();
 static void command_buffers_fini();
-
-struct WenMeshData
-{
-	glm::mat4       global_transform{1.0f};
-	glm::mat4       local_transform{1.0f};
-	uint32_t        mat_i{0};
-	uint32_t        ent_id{};
-	VkDeviceAddress vert_buffer_address{};
-};
 
 bool vk_renderer_init(
     WenRendererBackend *,
@@ -68,28 +50,31 @@ bool vk_renderer_init(
 
 	allocator_init();
 
-	// initialize renderer frame buffers and sync objects
-	// - create 3 frame buffers, (renderer semaphore, render semaphore, render
-	// fence)
 	frames_init();
 
-	// initialize renderer command buffers (immediate, compute);
 	command_buffers_init();
 
-	// initialize renderer images attachments (depth, color);
 	render_images_init();
 
 	configure_render_resources();
 
-	// initialize Vulkan extensions context
-	vk_ext_ctx_init(vk_renderer.vk_ctx.logical_device, &vk_renderer.vk_ext);
+	// initialize buffers vertex, index buffer.
+	vk_renderer.vertex_buffer = wen_vk_buffer_init(
+	    &vk_renderer.vk_ctx, sizeof(vertices[0]) * vertices.size(),
+	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+	    true);
+	vk_renderer.index_buffer = wen_vk_buffer_init(
+	    &vk_renderer.vk_ctx, sizeof(uint32_t) * indices.size(),
+	    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+	    true);
 
+	// initialize shader module, pipeline layout, pipeline.
 	wen_vk_shader_object_init(
 	    vk_renderer.vk_ctx.logical_device,
 	    vk_renderer.swapchain_context.format,
 	    &vk_renderer.vk_object_shader);
-	//	renderer_upload_vert_shader();
-	//	renderer_upload_frag_shader();
 
 	return true;
 }
@@ -97,6 +82,19 @@ bool vk_renderer_init(
 void vk_renderer_fini(WenRendererBackend *)
 {
 	vkDeviceWaitIdle(vk_renderer.vk_ctx.logical_device);
+
+	// Destroy buffers and free device memory
+	wen_vk_buffer_fini(
+	    &vk_renderer.vk_ctx,
+	    &vk_renderer.vertex_buffer);
+	wen_vk_buffer_fini(
+	    &vk_renderer.vk_ctx,
+	    &vk_renderer.index_buffer);
+
+	// Destroy shader modules, pipeline layout, pipeline
+	wen_vk_shader_object_fini(
+	    vk_renderer.vk_ctx.logical_device,
+	    &vk_renderer.vk_object_shader);
 
 	render_images_fini();
 	command_buffers_fini();
@@ -161,9 +159,7 @@ bool vk_renderer_end_frame(WenRendererBackend *, float)
 	    1,
 	    &current_frame->render_fence));
 
-	VkImage swapchain_image =
-	    vk_renderer.swapchain_context.images[swapchain_image_index];
-
+	VkImage swapchain_image = vk_renderer.swapchain_context.images[swapchain_image_index];
 	vk_command_ctx_begin_primary_buffer(
 	    &current_frame->command_context,
 	    VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -209,9 +205,35 @@ bool vk_renderer_end_frame(WenRendererBackend *, float)
 	    VK_IMAGE_LAYOUT_UNDEFINED,
 	    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-	vkCmdBeginRendering(cmd_buf, &vk_renderer.scene_rendering_info);
+	vkCmdBeginRendering(
+	    cmd_buf,
+	    &vk_renderer.scene_rendering_info);
+
+	vkCmdBindPipeline(
+	    cmd_buf,
+	    VK_PIPELINE_BIND_POINT_GRAPHICS,
+	    vk_renderer.vk_object_shader.pipeline_info.pipeline);
 
 	set_renderer_state(cmd_buf);
+
+	VkDeviceSize offset = {0};
+	vkCmdBindVertexBuffers(cmd_buf,
+	                       0,
+	                       1,
+	                       &vk_renderer.vertex_buffer.handle,
+	                       &offset);
+	vkCmdBindIndexBuffer(cmd_buf,
+	                     vk_renderer.index_buffer.handle,
+	                     offset,
+	                     VK_INDEX_TYPE_UINT32);
+
+	vkCmdDrawIndexed(
+	    cmd_buf,
+	    6,
+	    1,
+	    0,
+	    0,
+	    0);
 
 	vkCmdEndRendering(cmd_buf);
 
@@ -280,16 +302,13 @@ bool vk_renderer_end_frame(WenRendererBackend *, float)
 	return true;
 }
 
-VkRenderingInfo
-    vk_rendering_info_init(
-        std::span<VkRenderingAttachmentInfo *> color_attachments,
-        const VkRenderingAttachmentInfo       *depth_attachment,
-        VkExtent2D                             extent)
+VkRenderingInfo vk_rendering_info_init(
+    std::span<VkRenderingAttachmentInfo *> color_attachments,
+    const VkRenderingAttachmentInfo       *depth_attachment,
+    VkExtent2D                             extent)
 {
-	VkRenderingInfo rendering_info = {VK_STRUCTURE_TYPE_RENDERING_INFO};
-	rendering_info.renderArea      = VkRect2D{
-	         .offset = VkOffset2D{0, 0},
-	         .extent = extent};
+	VkRenderingInfo rendering_info      = {VK_STRUCTURE_TYPE_RENDERING_INFO};
+	rendering_info.renderArea           = VkRect2D{.offset = VkOffset2D{0, 0}, .extent = extent};
 	rendering_info.colorAttachmentCount = color_attachments.size();
 	rendering_info.pColorAttachments    = color_attachments[0];
 	rendering_info.pDepthAttachment     = depth_attachment;
@@ -299,28 +318,24 @@ VkRenderingInfo
 	return rendering_info;
 }
 
-VkRenderingAttachmentInfo
-    vk_color_attachment_info_init(
-        VkImageView         view,
-        const VkClearValue *clear,
-        VkAttachmentLoadOp  load_op,
-        VkAttachmentStoreOp store_op,
-        VkImageView         resolve_image_view)
+VkRenderingAttachmentInfo vk_color_attachment_info_init(
+    VkImageView         view,
+    const VkClearValue *clear,
+    VkAttachmentLoadOp  load_op,
+    VkAttachmentStoreOp store_op,
+    VkImageView         resolve_image_view)
 {
-	VkRenderingAttachmentInfo color_attachment_info = {
-	    VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-	color_attachment_info.imageView = view;
-	color_attachment_info.imageLayout =
-	    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_attachment_info.loadOp  = load_op;
-	color_attachment_info.storeOp = store_op;
+	VkRenderingAttachmentInfo color_attachment_info = {VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+	color_attachment_info.imageView                 = view;
+	color_attachment_info.imageLayout               = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	color_attachment_info.loadOp                    = load_op;
+	color_attachment_info.storeOp                   = store_op;
 
 	if (resolve_image_view)
 	{
-		color_attachment_info.resolveMode      = VK_RESOLVE_MODE_AVERAGE_BIT;
-		color_attachment_info.resolveImageView = resolve_image_view;
-		color_attachment_info.resolveImageLayout =
-		    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		color_attachment_info.resolveMode        = VK_RESOLVE_MODE_AVERAGE_BIT;
+		color_attachment_info.resolveImageView   = resolve_image_view;
+		color_attachment_info.resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 	if (clear)
 	{
@@ -330,17 +345,14 @@ VkRenderingAttachmentInfo
 	return color_attachment_info;
 }
 
-VkRenderingAttachmentInfo
-    vk_depth_attachment_info_init(
-        VkImageView         view,
-        VkAttachmentLoadOp  load_op,
-        VkAttachmentStoreOp store_op)
+VkRenderingAttachmentInfo vk_depth_attachment_info_init(
+    VkImageView         view,
+    VkAttachmentLoadOp  load_op,
+    VkAttachmentStoreOp store_op)
 {
-	VkRenderingAttachmentInfo depth_attachment_info = {
-	    VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-	depth_attachment_info.imageView = view;
-	depth_attachment_info.imageLayout =
-	    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkRenderingAttachmentInfo depth_attachment_info     = {VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+	depth_attachment_info.imageView                     = view;
+	depth_attachment_info.imageLayout                   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	depth_attachment_info.loadOp                        = load_op;
 	depth_attachment_info.storeOp                       = store_op;
 	depth_attachment_info.clearValue.depthStencil.depth = 0.0f;
@@ -384,7 +396,7 @@ static void
 	    color_image_flag,
 	    VK_IMAGE_VIEW_TYPE_2D,
 	    vk_renderer.image_extent,
-	    VK_FORMAT_R16G16B16A16_SFLOAT,
+	    VK_FORMAT_B8G8R8A8_UNORM,
 	    1,
 	    1);
 
@@ -428,12 +440,12 @@ static void
 	}
 }
 
-static void
-    configure_render_resources()
+static void configure_render_resources()
 {
 	VkClearValue scene_clear_value     = {.color = {{1.0f, 0.0f, 0.0f, 0.0f}}};
 	VkImageView  resolve_image_view    = nullptr;
 
+	// Set up the rendering attachment info.
 	vk_renderer.scene_color_attachment = vk_color_attachment_info_init(
 	    vk_renderer.color_image.view,
 	    &scene_clear_value,
@@ -556,8 +568,13 @@ void set_renderer_state(VkCommandBuffer command_buffer)
 	scissor.extent = scissor_extent;
 	scissor.offset = scissor_offset;
 
-	vkCmdSetViewportWithCount(command_buffer, 1, &viewport);
-	vkCmdSetScissorWithCount(command_buffer, 1, &scissor);
-	vkCmdSetRasterizerDiscardEnable(command_buffer, VK_FALSE);
-	vkCmdSetCullMode(command_buffer, VK_CULL_MODE_NONE);
+	vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+	vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+	vkCmdSetCullMode(command_buffer, VK_CULL_MODE_BACK_BIT);
+
+	vkCmdSetFrontFace(command_buffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+	vkCmdSetPrimitiveTopology(command_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 }

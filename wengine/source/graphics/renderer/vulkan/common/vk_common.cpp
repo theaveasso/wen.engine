@@ -4,6 +4,30 @@
 
 #include "platform/wen_filesystem.hpp"
 
+uint32_t wen_find_memory_type(
+    VkPhysicalDevice gpu,
+    uint32_t         type_filter,
+    int32_t          properties)
+{
+	// Structure to hold the physical device's memory properties
+	VkPhysicalDeviceMemoryProperties memory_properties;
+	vkGetPhysicalDeviceMemoryProperties(gpu, &memory_properties);
+
+	// Iterate over all memory types available on the gpu
+	for (uint32_t i = 0; i < memory_properties.memoryTypeCount; ++i)
+	{
+		if (type_filter & (1 << i))
+		{
+			if ((memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
+			{
+				return i;
+			}
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type.");
+}
+
 inline std::string get_stage_ext(VkShaderStageFlagBits stage)
 {
 	switch (stage)

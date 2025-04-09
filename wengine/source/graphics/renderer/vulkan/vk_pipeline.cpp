@@ -2,6 +2,7 @@
 #include "vk_shader.hpp"
 
 #include "graphics/renderer/vulkan/common/vk_common.hpp"
+#include "graphics/renderer/vulkan/common/vk_initializers.hpp"
 #include "vk_utils.hpp"
 
 bool vk_pipeline_info_init(
@@ -42,8 +43,6 @@ bool vk_pipeline_info_init(
 	rasterization_state.rasterizerDiscardEnable                 = VK_FALSE;
 	rasterization_state.polygonMode                             = VK_POLYGON_MODE_FILL;
 	rasterization_state.lineWidth                               = 1.0f;
-	rasterization_state.cullMode                                = VK_CULL_MODE_BACK_BIT;
-	rasterization_state.frontFace                               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterization_state.depthBiasEnable                         = VK_FALSE;
 	rasterization_state.depthBiasConstantFactor                 = 0.0f;
 	rasterization_state.depthBiasClamp                          = 0.0f;
@@ -102,9 +101,7 @@ bool vk_pipeline_info_init(
 		stages.emplace_back(stage.stage);
 	}
 
-	VkPipelineRenderingCreateInfo pipeline_rendering_info = {VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
-	pipeline_rendering_info.colorAttachmentCount          = 1;
-	pipeline_rendering_info.pColorAttachmentFormats       = &color_attachment_formats;
+	VkPipelineRenderingCreateInfo pipeline_rendering_info = WenPipelineRenderingCreateInfo(1, color_attachment_formats);
 
 	VkGraphicsPipelineCreateInfo create_info              = {VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	create_info.pNext                                     = &pipeline_rendering_info;
@@ -121,17 +118,28 @@ bool vk_pipeline_info_init(
 	create_info.layout                                    = object_shader->pipeline_info.layout;
 
 	// creating graphics pipeline
-	VkResult result                                       = vkCreateGraphicsPipelines(
-        device,
-        VK_NULL_HANDLE,
-        1,
-        &create_info,
-        VK_NULL_HANDLE,
-        &object_shader->pipeline_info.pipeline);
-	if (result != VK_SUCCESS)
-	{
-		return false;
-	}
+	vk_check(vkCreateGraphicsPipelines(
+	    device,
+	    VK_NULL_HANDLE,
+	    1,
+	    &create_info,
+	    VK_NULL_HANDLE,
+	    &object_shader->pipeline_info.pipeline));
 
 	return true;
+}
+
+void vk_pipeline_info_fini(
+    VkDevice           device,
+    WenVkPipelineInfo *pipeline_info)
+{
+	vkDestroyPipelineLayout(
+	    device,
+	    pipeline_info->layout,
+	    VK_NULL_HANDLE);
+
+	vkDestroyPipeline(
+	    device,
+	    pipeline_info->pipeline,
+	    VK_NULL_HANDLE);
 }

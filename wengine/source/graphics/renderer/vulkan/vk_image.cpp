@@ -33,10 +33,9 @@ WenVkAllocatedImage
 	image_create_info.samples           = static_cast<VkSampleCountFlagBits>(samples);
 	image_create_info.mipLevels         = mip_levels;
 	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
-	image_create_info.arrayLayers =
-	    view_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : 1;
-	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_create_info.flags         = view_type == VK_IMAGE_VIEW_TYPE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+	image_create_info.arrayLayers       = view_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : 1;
+	image_create_info.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.flags             = view_type == VK_IMAGE_VIEW_TYPE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
 
 	VmaAllocationCreateInfo allocation_create_info{};
 	allocation_create_info.usage = memory_usage;
@@ -57,7 +56,12 @@ WenVkAllocatedImage
 	}
 
 	image.view = vk_image_view_init(
-	    device, image.image, view_type, format, aspect_flags, image.mip_levels);
+	    device,
+	    image.image,
+	    view_type,
+	    format,
+	    aspect_flags,
+	    image.mip_levels);
 
 	return image;
 }
@@ -81,21 +85,26 @@ VkImageView
         VkImageAspectFlags aspect_flags,
         uint32_t           mip_levels)
 {
-	VkImageViewCreateInfo image_view_create_info = {
-	    VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-	image_view_create_info.format   = format;
-	image_view_create_info.image    = image;
-	image_view_create_info.viewType = image_view_type;
+	VkImageViewCreateInfo image_view_create_info = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+	image_view_create_info.format                = format;
+	image_view_create_info.image                 = image;
+	image_view_create_info.viewType              = image_view_type;
+	uint32_t layer_count                         = image_view_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : 1;
 
-	uint32_t layer_count            = image_view_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : 1;
-
-	auto subresource_range          = vk_image_subresource_range_init(
-        aspect_flags, layer_count, mip_levels, 0);
+	VkImageSubresourceRange subresource_range =
+	    vk_image_subresource_range_init(
+	        aspect_flags,
+	        layer_count,
+	        mip_levels,
+	        0);
 	image_view_create_info.subresourceRange = subresource_range;
 
 	VkImageView image_view;
 	vk_check(vkCreateImageView(
-	    device, &image_view_create_info, nullptr, &image_view));
+	    device,
+	    &image_view_create_info,
+	    nullptr,
+	    &image_view));
 
 	return image_view;
 }

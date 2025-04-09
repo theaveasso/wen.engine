@@ -2,7 +2,6 @@
 
 #include "graphics/renderer/vulkan/common/vk_common.hpp"
 #include "vk_pipeline.hpp"
-#include "vk_utils.hpp"
 
 #define BUILTIN_SHADER_NAME_OBJECT "Builtin.ObjectShader"
 
@@ -25,9 +24,25 @@ bool wen_vk_shader_object_init(VkDevice device, VkFormat format, WenVkObjectShad
 		object_shader->shader_stages[i].stage.pName  = "main";
 	}
 
-	return vk_pipeline_info_init(device, format, object_shader);
+	// initialize graphics pipeline and pipeline layout.
+	return vk_pipeline_info_init(
+	    device,
+	    format,
+	    object_shader);
 }
 
-void wen_vk_shader_object_fini(VkDevice device, WenVkObjectShader *object_shader)
+void wen_vk_shader_object_fini(
+    VkDevice           device,
+    WenVkObjectShader *object_shader)
 {
+	for (auto shader : object_shader->shader_stages)
+	{
+		vkDestroyShaderModule(
+		    device,
+		    shader.shader_module,
+		    VK_NULL_HANDLE);
+	}
+
+	// de-initialize graphics pipeline and pipeline layout.
+	vk_pipeline_info_fini(device, &object_shader->pipeline_info);
 }

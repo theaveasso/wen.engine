@@ -37,14 +37,15 @@ void vk_command_buffer_fini(
 }
 
 void vk_command_ctx_begin_primary_buffer(
-    const WenVkCommandContext *cmd_ctx, VkCommandBufferUsageFlags flags)
+    const WenVkCommandContext *cmd_ctx,
+    VkCommandBufferUsageFlags  flags)
 {
-	VkCommandBufferBeginInfo command_buffer_begin_info = {
-	    VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-	command_buffer_begin_info.flags = flags;
+	VkCommandBufferBeginInfo command_buffer_begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+	command_buffer_begin_info.flags                    = flags;
 
 	vk_check(vkBeginCommandBuffer(
-	    cmd_ctx->primary_buffer, &command_buffer_begin_info));
+	    cmd_ctx->primary_buffer,
+	    &command_buffer_begin_info));
 }
 
 void vk_command_ctx_submit_primary_buffer(

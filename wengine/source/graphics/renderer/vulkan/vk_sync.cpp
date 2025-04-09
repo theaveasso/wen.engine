@@ -83,31 +83,29 @@ void vk_image_memory_barrier_insert(
     VkPipelineStageFlags2 src_stages,
     VkPipelineStageFlags2 dst_stages)
 {
-	VkImageMemoryBarrier2 image_memory_barrier = {
-	    VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
-	image_memory_barrier.image        = image;
-	image_memory_barrier.srcStageMask = src_stages;
-	image_memory_barrier.dstStageMask = dst_stages;
-	image_memory_barrier.srcAccessMask =
-	    VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
-	image_memory_barrier.dstAccessMask =
-	    VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
-	image_memory_barrier.oldLayout   = current_layout;
-	image_memory_barrier.newLayout   = new_layout;
+	VkImageMemoryBarrier2 image_memory_barrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
+	image_memory_barrier.image                 = image;
+	image_memory_barrier.srcStageMask          = src_stages;
+	image_memory_barrier.dstStageMask          = dst_stages;
+	image_memory_barrier.srcAccessMask         = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+	image_memory_barrier.dstAccessMask         = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+	image_memory_barrier.oldLayout             = current_layout;
+	image_memory_barrier.newLayout             = new_layout;
 
-	VkDependencyInfo dependency_info = {VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
-
-	VkImageAspectFlags aspect_flags  = VK_IMAGE_ASPECT_COLOR_BIT;
-	if (image_memory_barrier.newLayout ==
-	    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+	VkDependencyInfo   dependency_info         = {VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+	VkImageAspectFlags aspect_flags            = VK_IMAGE_ASPECT_COLOR_BIT;
+	if (image_memory_barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 	{
 		aspect_flags = VK_IMAGE_ASPECT_DEPTH_BIT;
 	}
 
-	VkImageSubresourceRange subresource_range = vk_image_subresource_range_init(
-	    aspect_flags, layer_count, mip_levels, base_mip_level);
+	VkImageSubresourceRange subresource_range =
+	    vk_image_subresource_range_init(
+	        aspect_flags,
+	        layer_count,
+	        mip_levels,
+	        base_mip_level);
 	image_memory_barrier.subresourceRange   = subresource_range;
-
 	dependency_info.imageMemoryBarrierCount = 1;
 	dependency_info.pImageMemoryBarriers    = &image_memory_barrier;
 
