@@ -1,6 +1,6 @@
 #pragma once
 
-#include "privates/wen_pch.hpp"
+#include "common/wen_pch.hpp"
 
 #include "vk_context.hpp"
 #include "vk_pipeline.hpp"
@@ -18,8 +18,15 @@ struct WenVkObjectShader
 {
 	WenVkPipelineInfo                                       pipeline_info;
 	std::array<WenVkShaderStage, OBJECT_SHADER_STAGE_COUNT> shader_stages;
+	VkDescriptorSetLayout                                   global_descriptor_set_layout;
+	VkDescriptorPool                                        global_descriptor_pool;
+	VkDescriptorSet                                         global_descriptor_sets[3];
+	WenVkBuffer                                             global_uniform_buffer;
+	struct WenGlobalUniformObject                           global_ubo;
 };
 
+///
 bool wen_vk_shader_object_init(VkDevice device, VkFormat format, WenVkObjectShader *object_shader);
 
+///
 void wen_vk_shader_object_fini(VkDevice device, WenVkObjectShader *object_shader);

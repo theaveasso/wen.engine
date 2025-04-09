@@ -1,7 +1,14 @@
 #pragma once
 
+#include "common/wen_glm_common.hpp"
+#include "common/wen_pch.hpp"
 #include "core/wen_core_options.hpp"
-#include <cstdint>
+
+struct WenGlobalUniformObject
+{
+	glm::mat4 projection{};
+	glm::mat4 view{};
+};
 
 struct WenRendererBackend
 {

@@ -24,7 +24,9 @@ bool wen_vk_shader_object_init(VkDevice device, VkFormat format, WenVkObjectShad
 		object_shader->shader_stages[i].stage.pName  = "main";
 	}
 
-	// initialize graphics pipeline and pipeline layout.
+	// Initialize Descriptor.
+
+	// Initialize graphics pipeline and pipeline layout.
 	return vk_pipeline_info_init(
 	    device,
 	    format,
