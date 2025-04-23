@@ -1,25 +1,55 @@
-cmake_minimum_required(VERSION 3.28.1)
+cmake_minimum_required(VERSION 3.28)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")  # Add this line
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(wengine LANGUAGES C CXX)
-
-set(CMAKE_COLOR_MAKEFILE OFF)
-set(CMAKE_DEBUG_POSTFIX "")
-
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE})
-set(PROJECT_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+project(WenVK CXX C)
 
 include(FetchContent)
 
-add_subdirectory(thirdparty/glm EXCLUDE_FROM_ALL)
-add_subdirectory(thirdparty/vulkan EXCLUDE_FROM_ALL)
-add_subdirectory(thirdparty/glfw EXCLUDE_FROM_ALL)
-add_subdirectory(thirdparty/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty)
+add_subdirectory(source)
+add_subdirectory(examples/hello_world)
 
-add_subdirectory(wengine)
-#add_subdirectory(editor)
-add_subdirectory(sandbox)
+# ---------------------------------------------------
+# Compile shaders Target
+# ---------------------------------------------------
+set(VULKAN_SDK $ENV{VULKAN_SDK})
+set(GLSLC_EXECUTABLE ${VULKAN_SDK}/Bin/glslc.exe)
+
+set(SHADERS_SRC_DIR "${CMAKE_SOURCE_DIR}/shaders")
+set(SHADERS_DST_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>/shaders")
+file(GLOB_RECURSE GLSL_SHADERS "${SHADERS_SRC_DIR}/*.glsl")
+
+set(SPIRV_OUTPUTS "")
+
+foreach (SHADER ${GLSL_SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    set(SPIRV_FILE "${SHADERS_DST_DIR}/${FILE_NAME}.spv")
+    if (FILE_NAME MATCHES "\\.common\\.")
+        continue()
+    elseif (FILE_NAME MATCHES "\\.vert\\.")
+        set(SHADER_STAGE "vert")
+    elseif (FILE_NAME MATCHES "\\.frag\\.")
+        set(SHADER_STAGE "frag")
+    elseif (FILE_NAME MATCHES "\\.comp\\.")
+        set(SHADER_STAGE "comp")
+    else ()
+        message(FATAL_ERROR "Unknown shader stage for ${FILE_NAME}")
+    endif ()
+    message(STATUS "Compiled output" ${SPIRV_FILE})
+    add_custom_command(
+            OUTPUT ${SPIRV_FILE}
+            COMMAND ${GLSLC_EXECUTABLE} -fshader-stage=${SHADER_STAGE} ${SHADER} -o ${SPIRV_FILE}
+            COMMENT "Compiling ${FILE_NAME} to SPIR-V..."
+            VERBATIM
+    )
+
+    list(APPEND SPIRV_OUTPUTS ${SPIRV_FILE})
+endforeach ()
+
+add_custom_target(CompileShader ALL DEPENDS ${SPIRV_OUTPUTS})

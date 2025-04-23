@@ -1,8 +1,4 @@
-.cache
-build
-bin
+cmake-build-debug-visual-studio
+cmake-build-default-visual-studio
 
-cmake-build-debug
-compile_commands.json
-
-SDL_shadercross
+.idea
