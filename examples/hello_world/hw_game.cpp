@@ -43,7 +43,7 @@ void HWGame::on_draw()
 
 	_sprite_renderer.draw(cmd, _instance, _draw_image, _game_camera.get_view_proj());
 
-	wvk::gfx::EndFrameParams endFrameParams{
+	wvk::EndFrameParams endFrameParams{
 
 	};
 	_instance.end_frame(cmd, _draw_image, endFrameParams);

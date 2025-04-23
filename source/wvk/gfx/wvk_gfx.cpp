@@ -7,18 +7,14 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#include "wvk_gfxvkinit.hpp"
+#include "wvk_gfximpl.hpp"
 #include "wvk_gfxtypes.hpp"
 #include "wvk_gfxutils.hpp"
+#include "wvk_gfxvkinit.hpp"
 #include "wvk_gfxvulkan.hpp"
-
-#include "wvk_gfximpl.cpp"
 
 namespace wvk::gfx
 {
-#pragma region InstanceImpl
-#pragma endregion
-
 Instance::Instance() :
     _instance_impl(std::make_unique<InstanceImpl>())
 {
@@ -42,20 +38,20 @@ void Instance::init(GLFWwindow *window, const char *name, bool vsync)
 	_instance_impl->format = VK_FORMAT_B8G8R8A8_SRGB;
 
 	_instance_impl->swapchain =
-	    Swapchain(
+	    new Swapchain(
 	        _instance_impl->device,
 	        _instance_impl->format,
 	        w, h, _instance_impl->vsync,
 	        _instance_impl->appName);
 
 	_instance_impl->immediateCommandQueue =
-	    ImmediateCommandQueue(
+	    new ImmediateCommandQueue(
 	        get_device(),
 	        _instance_impl->graphicsFamilyQueueIndex,
 	        _instance_impl->graphicsQueue);
 
 	_instance_impl->bindlessSetManager =
-	    BindlessSetManager(
+	    new BindlessSetManager(
 	        get_device(), 1);
 
 	_instance_impl->_create_vma_allocator();
@@ -78,7 +74,7 @@ void Instance::cleanup()
 		vkDestroyCommandPool(_instance_impl->device.device, _instance_impl->frames[i].primaryPool, VK_NULL_HANDLE);
 	}
 
-	_instance_impl->swapchain.cleanup(_instance_impl->device.device);
+	_instance_impl->swapchain->cleanup(_instance_impl->device.device);
 	vkb::destroy_device(_instance_impl->device);
 	vkb::destroy_surface(_instance_impl->instance, _instance_impl->surface);
 	vkb::destroy_instance(_instance_impl->instance);
@@ -102,19 +98,20 @@ VkCommandBuffer Instance::begin_frame()
 void Instance::end_frame(
     VkCommandBuffer                 cmd,
     const std::shared_ptr<Texture> &drawImage,
-    const EndFrameParams           &params)
+    const EndFrameParams & /* params */)
 {
 	const auto [imageIndex, swapchainImage] =
-	    _instance_impl->swapchain.acquire_image(get_device(), get_current_frame_index());
+	    _instance_impl->swapchain->acquire_image(get_device(), get_current_frame_index());
 
 	if (swapchainImage == VK_NULL_HANDLE)
 	{
 		return;
 	}
 
-	_instance_impl->swapchain.resent_fence(get_device(), get_current_frame_index());
+	_instance_impl->swapchain->resent_fence(get_device(), get_current_frame_index());
 
 	VkImageLayout swapchainLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	(void) swapchainLayout;
 
 	{        // clear swapchain image
 		clear(cmd, swapchainImage, glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
@@ -124,17 +121,18 @@ void Instance::end_frame(
 
 	{        // blit from draw to swapchain image
 		transition_image(cmd, drawImage->handle(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		blit_image(cmd, drawImage->handle(), swapchainImage->handle(), drawImage->extent(), _instance_impl->swapchain.swapchain_extent(), VK_FILTER_NEAREST);
+		blit_image(cmd, drawImage->handle(), swapchainImage->handle(), drawImage->extent(), _instance_impl->swapchain->swapchain_extent(), VK_FILTER_NEAREST);
 	}
 
 	{        // prepare for present
 		transition_image(cmd, swapchainImage->handle(), swapchainLayout, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		swapchainLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		(void) swapchainLayout;
 	}
 
 	vk_assert(vkEndCommandBuffer(cmd));
 
-	_instance_impl->swapchain.submit_and_present(
+	_instance_impl->swapchain->submit_and_present(
 	    cmd,
 	    _instance_impl->graphicsQueue,
 	    get_current_frame_index(),
@@ -152,11 +150,11 @@ void Instance::recreate_swapchain(uint32_t width, uint32_t height)
 
 	wait_idle();
 
-	_instance_impl->swapchain.reinit(_instance_impl->device, _instance_impl->format, width, height);
+	_instance_impl->swapchain->reinit(_instance_impl->device, _instance_impl->format, width, height);
 }
 bool Instance::required_swapchain_reinit() const
 {
-	return _instance_impl->swapchain.required_reinit();
+	return _instance_impl->swapchain->required_reinit();
 }
 VkDevice Instance::get_device() const
 {
@@ -168,11 +166,11 @@ VmaAllocator Instance::get_allocator() const
 }
 VkExtent2D Instance::swapchain_extent() const
 {
-	return _instance_impl->swapchain.swapchain_extent();
+	return _instance_impl->swapchain->swapchain_extent();
 }
 VkDescriptorSetLayout Instance::get_bindless_desc_set_layout() const
 {
-	return _instance_impl->bindlessSetManager.get_desc_set_layout();
+	return _instance_impl->bindlessSetManager->get_desc_set_layout();
 }
 void Instance::bind_bindless_desc_set(VkCommandBuffer cmd, VkPipelineLayout layout) const
 {
@@ -182,13 +180,13 @@ void Instance::bind_bindless_desc_set(VkCommandBuffer cmd, VkPipelineLayout layo
 	    layout,
 	    0,
 	    1,
-	    &_instance_impl->bindlessSetManager.get_desc_set(),
+	    &_instance_impl->bindlessSetManager->get_desc_set(),
 	    0,
 	    VK_NULL_HANDLE);
 }
 const VkDescriptorSet &Instance::get_bindless_desc_set() const
 {
-	return _instance_impl->bindlessSetManager.get_desc_set();
+	return _instance_impl->bindlessSetManager->get_desc_set();
 }
 std::shared_ptr<Buffer> Instance::create_buffer(
     VkDeviceSize       size,
@@ -321,7 +319,7 @@ void Sprite::set_texture(const std::shared_ptr<Texture> &t)
 	texture_id   = t->get_bindless_id();
 	texture_size = glm::vec2{t->extent().width, t->extent().height};
 }
-void Sprite::set_texture_rect(const core::Rectangle &rec)
+void Sprite::set_texture_rect(const core::Rectangle &)
 {
 }
 void Sprite::set_pivot_pixel(const glm::ivec2 &pixel)
@@ -380,7 +378,6 @@ void SpriteRenderer::draw(
 	    _sprite_draw_commands);
 }
 void SpriteRenderer::draw_sprite(
-    Instance        &instance,
     const Sprite    &sprite,
     const glm::vec2 &position,
     float            rotation,
@@ -409,17 +406,15 @@ void SpriteRenderer::draw_sprite(
 	transformMatrix                 = glm::scale(transformMatrix, glm::vec3{size, 1.0f});
 	transformMatrix                 = glm::translate(transformMatrix, glm::vec3{-sprite.pivot, 0.f});
 
-//	SpriteDrawCommand drawCommand = {};
-
-//	SpriteDrawCommand{
-//		.transform = transformMatrix,
-//		.uv0       = sprite.uv0,
-//		.uv1       = sprite.uv1,
-//		.color     = sprite.color,
-//		.textureId = sprite.texture_id,
-//		.shaderId  = shaderId,
-//	});
-//	_sprite_draw_commands.push_back();
+	_sprite_draw_commands.push_back(
+	    SpriteDrawCommand{
+	        .transform = transformMatrix,
+	        .uv0       = sprite.uv0,
+	        .uv1       = sprite.uv1,
+	        .color     = sprite.color,
+	        .textureId = sprite.texture_id,
+	        .shaderId  = shaderId,
+	    });
 }
 void SpriteRenderer::draw_text()
 {

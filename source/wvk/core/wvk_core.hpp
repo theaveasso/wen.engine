@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wvk/common/wvk_pch.hpp"
+#include "wvk/common/wvk_defines.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -9,10 +10,10 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <stb_image.h>
 
 #include "wvk/core/wvk_math.hpp"
 #include "wvk/gfx/wvk_gfxtypes.hpp"
-#include "wvk/gfx/wvk_gfxvulkan.hpp"
 
 namespace wvk::gfx
 {
@@ -27,7 +28,7 @@ namespace wvk::core
 /// ----------------------------------------------------------------------------------------
 /// Image
 /// ----------------------------------------------------------------------------------------
-struct ImageData
+struct WVK_API ImageData
 {
 	WVK_MOVABLE_ONLY(ImageData);
 

@@ -1,4 +1,5 @@
 #define GLFW_INCLUDE_VULKAN
+#include "wvk_gfximpl.hpp"
 #include <GLFW/glfw3.h>
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
@@ -11,51 +12,6 @@
 
 namespace wvk::gfx
 {
-struct InstanceImpl
-{
-	std::string appName;
-
-	vkb::Instance         instance       = {};
-	vkb::PhysicalDevice   physicalDevice = {};
-	vkb::Device           device         = {};
-	VmaAllocator          allocator      = VK_NULL_HANDLE;
-	VkFormat              format         = VK_FORMAT_B8G8R8A8_SRGB;
-	VkSurfaceKHR          surface        = VK_NULL_HANDLE;
-	Swapchain             swapchain;
-	ImmediateCommandQueue immediateCommandQueue;
-	BindlessSetManager    bindlessSetManager;
-
-	std::array<FrameData, FRAME_OVERLAP> frames;
-	uint32_t                             frameNumber = 0;
-
-	VkQueue  graphicsQueue            = VK_NULL_HANDLE;
-	uint32_t graphicsFamilyQueueIndex = 0;
-
-	bool vsync         = false;
-	bool isInitialized = false;
-
-	void _vulkan_init(GLFWwindow *window);
-	void _create_vma_allocator();
-	void _create_frame_data();
-	void _create_default_texture();
-
-	std::shared_ptr<Buffer> _create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "");
-
-	VkCommandBuffer _begin_frame();
-
-	// images
-	TextureVec                     textures = {};
-	[[nodiscard]] inline TextureId _get_free_texture_id() const { return WVK_CAST(uint32_t, textures.size()); }
-	TextureId                      _add_texture(TextureId id, const std::shared_ptr<Texture> &texture);
-	void                           _destroy_textures();
-
-	FrameData             &_get_current_frame_data() { return frames[_get_current_frame_index()]; }
-	[[nodiscard]] uint32_t _get_current_frame_index() const { return frameNumber % FRAME_OVERLAP; }
-
-	TextureId whiteTextureId;
-	TextureId errorTextureId;
-};
-
 void InstanceImpl::_vulkan_init(
     GLFWwindow *window)
 {
@@ -240,7 +196,7 @@ void InstanceImpl::_create_default_texture()
 	    errorPixels.data(),
 	    errorTexture->pixel_size_in_bytes() * errorTexture->extent3d().width * errorTexture->extent3d().height * errorTexture->extent3d().depth);
 
-	immediateCommandQueue.submit(device.device, [&](VkCommandBuffer cmd) {
+	immediateCommandQueue->submit(device.device, [&](VkCommandBuffer cmd) {
 		whiteTexture->upload_only(cmd, whiteTextureStagingBuffer.get());
 		errorTexture->upload_only(cmd, errorTextureStagingBuffer.get());
 	});
@@ -254,7 +210,7 @@ void InstanceImpl::_create_default_texture()
 
 VkCommandBuffer InstanceImpl::_begin_frame()
 {
-	swapchain.begin_frame(device.device, _get_current_frame_index());
+	swapchain->begin_frame(device.device, _get_current_frame_index());
 	const FrameData       &frame = _get_current_frame_data();
 	const VkCommandBuffer &cmd   = frame.primaryCommandBuffer;
 
@@ -282,7 +238,7 @@ TextureId InstanceImpl::_add_texture(
 	{
 		textures.push_back(texture);
 	}
-	bindlessSetManager.add_image(
+	bindlessSetManager->add_image(
 	    device.device,
 	    id,
 	    texture->image_view());

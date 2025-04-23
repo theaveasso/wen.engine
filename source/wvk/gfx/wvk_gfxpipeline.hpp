@@ -3,10 +3,14 @@
 #include "wvk_gfxvulkan.hpp"
 #include <glm/mat4x4.hpp>
 
+namespace wvk
+{
+struct SpriteDrawCommand;
+}
+
 namespace wvk::gfx
 {
 class Instance;
-struct SpriteDrawCommand;
 
 #pragma region gfx::SpriteRenderingPipeline
 class WVK_API  SpriteRenderingPipeline final

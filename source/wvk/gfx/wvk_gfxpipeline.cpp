@@ -45,7 +45,7 @@ void           SpriteRenderingPipeline::init(
 	for (size_t i = 0; i < FRAME_OVERLAP; ++i)
 	{
 		_frames[i].sprite_draw_command_buffer = instance.create_persistent_buffer(
-		    maxSprites * sizeof(SpriteDrawCommand),
+		    maxSprites * sizeof(wvk::SpriteDrawCommand),
 		    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		    "sprite draw commands");
 	}
@@ -64,7 +64,7 @@ void SpriteRenderingPipeline::draw(
     Instance                             &instance,
     const std::shared_ptr<Texture>       &drawImage,
     const glm::mat4                      &viewProj,
-    const std::vector<SpriteDrawCommand> &drawCommands)
+    const std::vector<wvk::SpriteDrawCommand> &drawCommands)
 {
 	if (drawCommands.empty())
 	{
@@ -72,7 +72,7 @@ void SpriteRenderingPipeline::draw(
 	}
 
 	const std::shared_ptr<Buffer> &pfd = get_current_frame_data(instance.get_current_frame_index()).sprite_draw_command_buffer;
-	pfd->copy_data_to_buffer(drawCommands.data(), drawCommands.size() * sizeof(SpriteDrawCommand));
+	pfd->copy_data_to_buffer(drawCommands.data(), drawCommands.size() * sizeof(wvk::SpriteDrawCommand));
 
 	const RenderInfo renderInfo = create_rendering_info(
 	    {.renderArea     = {{0}, drawImage->extent()},

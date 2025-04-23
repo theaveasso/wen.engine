@@ -16,5 +16,6 @@
 // -------------------------------------------
 // Graphics
 // -------------------------------------------
-#include <wvk/gfx/wvk_gfx.hpp>
-#include <wvk/gfx/wvk_gfxvulkan.hpp>
+#include "wvk/gfx/wvk_gfx.hpp"
+#include "wvk/gfx/wvk_gfxvulkan.hpp"
+#include "wvk/gfx/wvk_gfxtypes.hpp"

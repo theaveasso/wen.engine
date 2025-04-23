@@ -16,6 +16,8 @@ struct GLFWwindow;
 namespace wvk::gfx
 {
 
+struct InstanceImpl;
+
 struct Glyph
 {
 	glm::vec2  uv0;                ///< top left
@@ -109,7 +111,6 @@ class WVK_API  Instance final
 	FrameData             &get_current_frame();
 
   private:
-	struct InstanceImpl;
 	std::unique_ptr<InstanceImpl> _instance_impl;
 };
 #pragma endregion
@@ -162,7 +163,7 @@ class WVK_API SpriteRenderer
 	void draw(VkCommandBuffer cmd, Instance &instance, const std::shared_ptr<Texture> &drawImage);
 	void draw(VkCommandBuffer cmd, Instance &instance, const std::shared_ptr<Texture> &drawImage, const glm::mat4 viewProjection);
 
-	void draw_sprite(Instance &instance, const Sprite &sprite, const glm::vec2 &position, float rotation, const glm::vec2 &scale, uint32_t shaderId = SPRITE_SHADER_ID);
+	void draw_sprite(const Sprite &sprite, const glm::vec2 &position, float rotation, const glm::vec2 &scale, uint32_t shaderId = SPRITE_SHADER_ID);
 
 	void draw_sprite(const Sprite &sprite, const glm::mat4 &transform, uint32_t shaderId = SPRITE_SHADER_ID);
 
