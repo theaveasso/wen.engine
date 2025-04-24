@@ -40,6 +40,7 @@ target_link_libraries(${PROJECT_NAME}
         nlohmann_json::nlohmann_json
         stb
         imgui
+        Tracy::TracyClient
 
         PRIVATE
         glfw)
@@ -68,6 +69,15 @@ target_compile_definitions(
         GLM_FORCE_DEPTH_ZERO_TO_ONE
         GLM_ENABLE_EXPERIMENTAL
         GLM_FORCE_RADIANS)
+
+# tracy
+if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    target_compile_definitions(
+            ${PROJECT_NAME}
+            PUBLIC
+            TRACY_ENABLE
+            TRACY_DELAYED_INIT)
+endif ()
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /Zi /EHsc /wd4100 /wd4251 /wd4324)

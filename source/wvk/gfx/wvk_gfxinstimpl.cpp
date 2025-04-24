@@ -1,13 +1,7 @@
-#define GLFW_INCLUDE_VULKAN
 #include "wvk_gfxinstimpl.hpp"
 
 #include <GLFW/glfw3.h>
-#include <VkBootstrap.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 #include <imgui.h>
-#include <vk_mem_alloc.h>
-#include <volk.h>
 
 #include "wvk/common/wvk_pch.hpp"
 #include "wvk_gfx.hpp"

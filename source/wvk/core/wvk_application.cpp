@@ -8,6 +8,7 @@ namespace wvk
 {
 void Application::init(const AppConfig& config)
 {
+	WVK_PROFILER_ZONE("Application Initialization", WVK_PROFILER_COLOR_CREATE);
 	_app_config = config;
 
 	load_app_settings();
@@ -62,6 +63,8 @@ void Application::init(const AppConfig& config)
 	_instance.init(_window, _app_config.appName.c_str(), _vsync);
 
 	on_init();
+
+	WVK_PROFILER_ZONE_END();
 }
 void Application::cleanup()
 {

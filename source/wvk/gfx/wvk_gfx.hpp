@@ -91,7 +91,7 @@ class WVK_API ImGuiRenderer
   public:
 	explicit ImGuiRenderer(Instance &instance, GLFWwindow *window, VkFormat drawImageFormat, std::string_view name = "");
 
-	void cleanup(Instance &instance);
+	void cleanup(VkDevice device);
 
 	void begin_draw();
 	void end_draw();

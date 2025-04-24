@@ -5,11 +5,6 @@
 #include "wvk_gfxtypes.hpp"
 #include "wvk_gfxvulkan.hpp"
 
-namespace wvk
-{
-struct SpriteDrawCommand;
-}
-
 namespace wvk::gfx
 {
 

@@ -1,9 +1,21 @@
 #pragma once
 
+// clang-format off
+#include <vulkan/vulkan.h>
+#include <volk.h>
+#include <tracy/TracyVulkan.hpp>
+// clang-format on
+
+#ifdef TRACY_ENABLE
+#	define WVK_PROFILER_GPU_ZONE(name, ctx, cmd, color) \
+		TracyVkZoneC(ctx, cmd, name, color)
+#else
+#	define WVK_PROFILER_GPU_ZONE(name, ctx, cmd, color) (void) 0
+#endif
+
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <imgui.h>
-#include <volk.h>
 
 namespace wvk
 {
@@ -54,6 +66,7 @@ struct FrameData
 {
 	VkCommandPool   primaryPool          = VK_NULL_HANDLE;
 	VkCommandBuffer primaryCommandBuffer = VK_NULL_HANDLE;
+	TracyVkCtx      tracyVkCtx;
 };
 
 struct SpriteDrawCommand

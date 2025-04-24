@@ -4,6 +4,7 @@
 
 #include "wvk_gfx.hpp"
 #include "wvk_gfxinstimpl.hpp"
+#include "wvk_gfxtypes.hpp"
 #include "wvk_gfxvkinit.hpp"
 #include "wvk_gfxvulkan.hpp"
 
@@ -53,6 +54,7 @@ void Instance::init(GLFWwindow *window, const char *name, bool vsync)
 	        get_device(), 1);
 
 	_instance_impl->_create_default_texture();
+
 	_instance_impl->_create_frame_data();
 
 	_instance_impl->imguiRenderer =
@@ -75,6 +77,15 @@ void Instance::init(GLFWwindow *window, const char *name, bool vsync)
 		io.MouseDown[imguiButton] = action == GLFW_PRESS;
 	});
 
+	for (size_t i = 0; i < FRAME_OVERLAP; ++i)
+	{
+		_instance_impl->frames[i].tracyVkCtx =
+		    TracyVkContext(_instance_impl->physicalDevice.physical_device,
+		                   _instance_impl->device.device,
+		                   _instance_impl->graphicsQueue,
+		                   _instance_impl->frames[i].primaryCommandBuffer);
+	}
+
 	_instance_impl->isInitialized = true;
 }
 
@@ -83,13 +94,17 @@ void Instance::cleanup()
 	WVK_ASSERT_MSG(_instance_impl->isInitialized, "vulkan instance was not initialized!");
 	_instance_impl->_destroy_textures();
 
-	for (size_t i = 0; i < FRAME_OVERLAP; ++i)
+	for (auto &frame : _instance_impl->frames)
 	{
-		vkFreeCommandBuffers(_instance_impl->device.device, _instance_impl->frames[i].primaryPool, 1, &_instance_impl->frames[i].primaryCommandBuffer);
-		vkDestroyCommandPool(_instance_impl->device.device, _instance_impl->frames[i].primaryPool, VK_NULL_HANDLE);
+		vkFreeCommandBuffers(get_device(), frame.primaryPool, 1, &frame.primaryCommandBuffer);
+		vkDestroyCommandPool(get_device(), frame.primaryPool, VK_NULL_HANDLE);
+		TracyVkDestroy(frame.tracyVkCtx);
 	}
 
-	_instance_impl->swapchain->cleanup(_instance_impl->device.device);
+	_instance_impl->imguiRenderer->cleanup(get_device());
+	_instance_impl->swapchain->cleanup(get_device());
+	_instance_impl->immediateCommandQueue->cleanup(get_device());
+
 	vkb::destroy_device(_instance_impl->device);
 	vkb::destroy_surface(_instance_impl->instance, _instance_impl->surface);
 	vkb::destroy_instance(_instance_impl->instance);
@@ -166,11 +181,14 @@ void Instance::end_frame(
 			swapchainLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 			cmd_begin_w_label(cmd, "draw imgui");
+			WVK_PROFILER_ZONE("ImGui_draw", WVK_PROFILER_COLOR_CMD_DRAW);
+			WVK_PROFILER_GPU_ZONE("ImGui", get_tracy_vk_ctx(), cmd, WVK_PROFILER_COLOR_CMD_DRAW);
 			_instance_impl->imguiRenderer->draw(
 			    cmd,
 			    *this,
 			    _instance_impl->swapchain->get_image_view(imageIndex),
 			    _instance_impl->swapchain->swapchain_extent());
+			WVK_PROFILER_ZONE_END();
 			cmd_end_w_label(cmd);
 		}
 	}
@@ -179,6 +197,10 @@ void Instance::end_frame(
 		transition_image(cmd, swapchainImage->handle(), swapchainLayout, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		swapchainLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		(void) swapchainLayout;
+	}
+
+	{
+		TracyVkCollect(get_tracy_vk_ctx(), get_current_frame().primaryCommandBuffer);
 	}
 
 	vk_assert(vkEndCommandBuffer(cmd));
@@ -195,6 +217,12 @@ void Instance::wait_idle() const
 {
 	vkDeviceWaitIdle(_instance_impl->device.device);
 }
+
+const TracyVkCtx &Instance::get_tracy_vk_ctx() const
+{
+	return _instance_impl->_get_current_frame_data().tracyVkCtx;
+}
+
 void Instance::recreate_swapchain(uint32_t width, uint32_t height)
 {
 	WVK_ASSERT_MSG(width != 0 && height != 0, "width and height must not equal 0");
@@ -368,6 +396,11 @@ void Instance::destroy_buffer(std::shared_ptr<Buffer> &buffer)
 uint32_t Instance::get_current_frame_index() const
 {
 	return _instance_impl->_get_current_frame_index();
+}
+
+wvk::FrameData &Instance::get_current_frame()
+{
+	return _instance_impl->_get_current_frame_data();
 }
 
 [[nodiscard]] TextureId Instance::create_texture_w_pixels(

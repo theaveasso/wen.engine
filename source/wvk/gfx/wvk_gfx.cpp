@@ -230,11 +230,13 @@ void ImGuiRenderer::_init(
 }
 
 void ImGuiRenderer::cleanup(
-    Instance &instance)
+    VkDevice device)
 {
 	WVK_ASSERT_MSG(_is_initialized, "imgui renderer was not initialized!");
-	_drawing_pipeline.cleanup(instance.get_device());
+	_drawing_pipeline.cleanup(device);
 	ImGui::SetCurrentContext(_context);
+
+	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext(_context);
 	_context = nullptr;
 }

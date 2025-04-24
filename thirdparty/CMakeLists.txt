@@ -33,6 +33,8 @@ fetch_dep(imgui https://github.com/ocornut/imgui.git docking)
 fetch_dep(stb https://github.com/nothings/stb.git f0569113c93ad095470c54bf34a17b36646bbbb5)
 fetch_dep(nlohmann https://github.com/nlohmann/json.git v3.12.0)
 fetch_dep(fmt https://github.com/fmtlib/fmt.git 11.1.4)
+fetch_dep(tracy https://github.com/wolfpld/tracy.git v0.11.1)
+
 
 add_library(
         imgui STATIC

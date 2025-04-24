@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vk_mem_alloc.h>
-#include <volk.h>
 
 #include "wvk/common/wvk_defines.hpp"
 #include "wvk/gfx/wvk_gfxtypes.hpp"
@@ -10,7 +9,6 @@ struct GLFWwindow;
 
 namespace wvk::gfx
 {
-
 class Texture;
 
 class Buffer;
@@ -26,13 +24,6 @@ struct InstanceImpl;
 
 class WVK_API Instance final
 {
-  public:
-	struct FrameData
-	{
-		VkCommandPool   primaryPool          = VK_NULL_HANDLE;
-		VkCommandBuffer primaryCommandBuffer = VK_NULL_HANDLE;
-	};
-
   public:
 	Instance();
 	~Instance();
@@ -70,14 +61,16 @@ class WVK_API Instance final
 	static void destroy_buffer(std::shared_ptr<Buffer> &buffer);
 	void        upload_buffer_to_gpu(VkCommandBuffer cmd, Buffer *gpuBuffer, const void *data, VkDeviceSize totalSize, uint32_t offset) const;
 
+	VkCommandBuffer begin_frame();
+	void            end_frame(VkCommandBuffer cmd, const std::shared_ptr<Texture> &drawImage, const EndFrameParams &params);
+
 	void          imgui_begin_frame();
 	void          imgui_end_frame();
 	ImGuiContext *get_imgui_ctx();
 
-	VkCommandBuffer begin_frame();
-	void            end_frame(VkCommandBuffer cmd, const std::shared_ptr<Texture> &drawImage, const EndFrameParams &params);
-
 	inline void wait_idle() const;
+
+	const TracyVkCtx &get_tracy_vk_ctx() const;
 
 	[[nodiscard]] VkDevice     get_device() const;
 	[[nodiscard]] VmaAllocator get_allocator() const;
@@ -96,7 +89,7 @@ class WVK_API Instance final
 	void                                 bind_bindless_desc_set(VkCommandBuffer cmd, VkPipelineLayout layout) const;
 
 	[[nodiscard]] uint32_t get_current_frame_index() const;
-	FrameData             &get_current_frame();
+	wvk::FrameData        &get_current_frame();
 
   private:
 	std::unique_ptr<InstanceImpl> _instance_impl;

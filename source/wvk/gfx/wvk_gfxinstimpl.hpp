@@ -1,7 +1,12 @@
 #pragma once
 
+// clang-format off
+#include <vulkan/vulkan.h>
+#include <volk.h>
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
+#include <tracy/TracyVulkan.hpp>
+// clang-format on
 
 #include "wvk_gfxtypes.hpp"
 

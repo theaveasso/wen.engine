@@ -52,20 +52,45 @@
 #endif
 // clang-format on
 
+#if defined(TRACY_ENABLE)
+// clang-format off
+#include <tracy/Tracy.hpp>
+
+#define WVK_PROFILER_COLOR_WAIT 		0xff0000
+#define WVK_PROFILER_COLOR_SUBMIT 		0x0000ff
+#define WVK_PROFILER_COLOR_PRESENT 		0x00ff00
+#define WVK_PROFILER_COLOR_CREATE 		0xff6600
+#define WVK_PROFILER_COLOR_DESTROY 		0xffa500
+#define WVK_PROFILER_COLOR_BARRIER 		0xffffff
+#define WVK_PROFILER_COLOR_CMD_DRAW 	tracy::Color::VioletRed
+#define WVK_PROFILER_COLOR_CMD_COPY 	0x8b0a50
+#define WVK_PROFILER_COLOR_CMD_RTX 		0x8b0aff
+#define WVK_PROFILER_COLOR_CMD_DISPATCH 0x8b0aff
+
+#define WVK_PROFILER_FUNC() ZoneScoped
+#define WVK_PROFILER_FUNC_COLOR(color) ZoneScopedC(color)
+#define WVK_PROFILER_ZONE(name, color)     \
+		{                                  \
+			ZoneScopedC(color);            \
+			ZoneName(name, strlen(name))
+#define WVK_PROFILER_ZONE_END() }
+#define WVK_PROFILER_THREAD(name) tracy::SetThreadName(name)
+#define WVK_PROFILER_FRAME(name) FrameMarkNamed(name)
+#else
+#define WVK_PROFILER_FUNC() 			(void) 0
+#define WVK_PROFILER_FUNC_COLOR(color)  (void) 0
+#define WVK_PROFILER_ZONE(name, color)	(void) 0
+#define WVK_PROFILER_ZONE_END() 		(void) 0
+#define WVK_PROFILER_THREAD(name) 		(void) 0
+#define WVK_PROFILER_FRAME(name) 		(void) 0
+// clang-format on
+#endif
+
 #define WVK_MOVABLE_ONLY(CLASS_NAME)                         \
 	CLASS_NAME(const CLASS_NAME &)                = delete;  \
 	CLASS_NAME &operator=(const CLASS_NAME &)     = delete;  \
 	CLASS_NAME(CLASS_NAME &&) noexcept            = default; \
 	CLASS_NAME &operator=(CLASS_NAME &&) noexcept = default;
-
-constexpr uint32_t CAMERA_SET               = 0;
-constexpr uint32_t TEXTURES_AND_SAMPLER_SET = 1;
-constexpr uint32_t VERTEX_INDEX_SET         = 2;
-constexpr uint32_t MATERIAL_SET             = 3;
-constexpr uint32_t BINDING_0                = 0;
-constexpr uint32_t BINDING_1                = 1;
-constexpr uint32_t BINDING_2                = 2;
-constexpr uint32_t BINDING_3                = 3;
 
 #define FRAME_OVERLAP 3
 
