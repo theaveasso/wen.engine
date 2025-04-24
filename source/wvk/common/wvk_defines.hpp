@@ -68,3 +68,6 @@ constexpr uint32_t BINDING_2                = 2;
 constexpr uint32_t BINDING_3                = 3;
 
 #define FRAME_OVERLAP 3
+
+using std::make_shared;
+using std::shared_ptr;

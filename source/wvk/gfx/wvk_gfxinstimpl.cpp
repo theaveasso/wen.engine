@@ -1,14 +1,19 @@
 #define GLFW_INCLUDE_VULKAN
-#include "wvk_gfximpl.hpp"
+#include "wvk_gfxinstimpl.hpp"
+
 #include <GLFW/glfw3.h>
 #include <VkBootstrap.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+#include <imgui.h>
 #include <vk_mem_alloc.h>
 #include <volk.h>
 
 #include "wvk/common/wvk_pch.hpp"
+#include "wvk_gfx.hpp"
+#include "wvk_gfxtypes.hpp"
 #include "wvk_gfxvkinit.hpp"
 #include "wvk_gfxvulkan.hpp"
-#include "wvk_gfxtypes.hpp"
 
 namespace wvk::gfx
 {
@@ -139,73 +144,67 @@ void InstanceImpl::_create_frame_data()
 	}
 }
 
+TextureId InstanceImpl::_create_texture_w_pixels(
+    VkFormat          format,
+    VkImageUsageFlags flags,
+    VkExtent2D        extent,
+    const void       *data,
+    std::string_view  name)
+{
+	CreateTextureInfo textureInfo = {};
+	textureInfo.format            = format;
+	textureInfo.usage             = flags;
+	textureInfo.extent            = VkExtent3D{extent.width, extent.height, 1};
+
+	VmaAllocationCreateInfo memInfo =
+	    init::vma_allocation_create_info();
+
+	shared_ptr<Texture> texture = make_shared<Texture>(
+	    device.device,
+	    allocator,
+	    textureInfo,
+	    memInfo,
+	    name);
+
+	Buffer stageBuffer = _create_staging_buffer(
+	    texture->image_size(),
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	    name);
+
+	stageBuffer.copy_data_to_buffer(
+	    data,
+	    texture->size());
+
+	immediateCommandQueue->submit(device.device, [&](VkCommandBuffer cmd) {
+		texture->upload_only(cmd, &stageBuffer);
+	});
+
+	TextureId outId = _add_texture(_get_free_texture_id(), texture);
+
+	stageBuffer.cleanup();
+
+	return outId;
+}
+
 void InstanceImpl::_create_default_texture()
 {
 	const uint32_t whitePixel   = 0xFFFFFFFF;
 	const uint32_t blackPixel   = 0xFF000000;
 	const uint32_t magentaPixel = 0xFF0000FF;
 
-	// white texture
-	CreateImageInfo whiteTextureInfo = {};
-	whiteTextureInfo.format          = VK_FORMAT_R8G8B8A8_UNORM;
-	whiteTextureInfo.usage           = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-	whiteTextureInfo.extents         = {.width = 1, .height = 1, .depth = 1};
-
-	VmaAllocationCreateInfo memInfo =
-	    init::vma_allocation_create_info();
-
-	std::shared_ptr<Texture> whiteTexture = std::make_shared<Texture>(
-	    device.device,
-	    allocator,
-	    whiteTextureInfo,
-	    memInfo,
-	    "white texture");
-
-	// error texture
-	CreateImageInfo errorTextureInfo = {};
-	errorTextureInfo.format          = VK_FORMAT_R8G8B8A8_UNORM;
-	errorTextureInfo.usage           = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-	errorTextureInfo.extents         = {.width = 2, .height = 2, .depth = 1};
+	whiteTextureId = _create_texture_w_pixels(
+	    VK_FORMAT_R8G8B8A8_UNORM,
+	    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+	    {.width = 1, .height = 1},
+	    &whitePixel);
 
 	std::array<uint32_t, 4> errorPixels{blackPixel, magentaPixel, magentaPixel, blackPixel};
 
-	std::shared_ptr<Texture> errorTexture = std::make_shared<Texture>(
-	    device.device,
-	    allocator,
-	    errorTextureInfo,
-	    memInfo,
-	    "error texture");
-
-	std::shared_ptr<Buffer> whiteTextureStagingBuffer =
-	    _create_staging_buffer(
-	        whiteTexture->image_size(),
-	        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	        "white texture upload staging buffer");
-
-	whiteTextureStagingBuffer->copy_data_to_buffer(
-	    &whitePixel,
-	    whiteTexture->pixel_size_in_bytes() * whiteTexture->extent3d().width * whiteTexture->extent3d().height * whiteTexture->extent3d().depth);
-
-	std::shared_ptr<Buffer> errorTextureStagingBuffer =
-	    _create_staging_buffer(
-	        errorTexture->image_size(),
-	        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	        "error texture upload staging buffer");
-
-	errorTextureStagingBuffer->copy_data_to_buffer(
-	    errorPixels.data(),
-	    errorTexture->pixel_size_in_bytes() * errorTexture->extent3d().width * errorTexture->extent3d().height * errorTexture->extent3d().depth);
-
-	immediateCommandQueue->submit(device.device, [&](VkCommandBuffer cmd) {
-		whiteTexture->upload_only(cmd, whiteTextureStagingBuffer.get());
-		errorTexture->upload_only(cmd, errorTextureStagingBuffer.get());
-	});
-
-	whiteTextureId = _add_texture(_get_free_texture_id(), whiteTexture);
-	errorTextureId = _add_texture(_get_free_texture_id(), errorTexture);
-
-	whiteTextureStagingBuffer->cleanup();
-	errorTextureStagingBuffer->cleanup();
+	errorTextureId = _create_texture_w_pixels(
+	    VK_FORMAT_R8G8B8A8_UNORM,
+	    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+	    {.width = 2, .height = 2},
+	    errorPixels.data());
 }
 
 VkCommandBuffer InstanceImpl::_begin_frame()
@@ -254,7 +253,7 @@ void InstanceImpl::_destroy_textures()
 	}
 }
 
-std::shared_ptr<Buffer> InstanceImpl::_create_staging_buffer(
+Buffer InstanceImpl::_create_staging_buffer(
     VkDeviceSize       size,
     VkBufferUsageFlags usages,
     std::string_view   name)
@@ -270,7 +269,7 @@ std::shared_ptr<Buffer> InstanceImpl::_create_staging_buffer(
 	        size,
 	        usages);
 
-	return std::make_shared<Buffer>(
+	return Buffer(
 	    device.device,
 	    allocator,
 	    &memoryCreateInfo,

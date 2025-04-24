@@ -2,6 +2,7 @@
 #include "common/wvk_defines.hpp"
 
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
 namespace wvk
 {
@@ -51,6 +52,13 @@ void Application::init(const AppConfig& config)
 		exit(EXIT_FAILURE);
 	}
 
+	glfwSetKeyCallback(_window, [](GLFWwindow *window, int key, int, int action, int) {
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(window, true);
+		}
+	});
+
 	_instance.init(_window, _app_config.appName.c_str(), _vsync);
 
 	on_init();
@@ -90,18 +98,24 @@ void Application::run()
 			accumulator = dt;
 		}
 
-		while (accumulator >= dt)
-		{
-			glfwPollEvents();
-
-			if (_instance.required_swapchain_reinit())
+		{        // event processing
+			while (accumulator >= dt)
 			{
-				_instance.recreate_swapchain(1280, 232);
-				on_window_resize();
+				glfwPollEvents();
+				if (_instance.required_swapchain_reinit())
+				{
+					_instance.recreate_swapchain(1280, 232);
+					on_window_resize();
+				}
+
+				accumulator -= dt;
 			}
 
-			accumulator -= dt;
+			_instance.imgui_begin_frame();
+
 			on_update(dt);
+
+			_instance.imgui_end_frame();
 		}
 
 		if (!_instance.required_swapchain_reinit())

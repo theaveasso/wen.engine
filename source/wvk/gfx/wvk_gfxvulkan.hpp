@@ -1,140 +1,150 @@
 #pragma once
 
-#include "wvk/common/wvk_pch.hpp"
-#include "wvk_gfxutils.hpp"
-
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
 
-namespace wvk::gfx {
-    class Buffer;
+#include "wvk/common/wvk_defines.hpp"
+#include "wvk/common/wvk_pch.hpp"
+#include "wvk_gfxutils.hpp"
 
-    class Texture;
+namespace wvk::gfx
+{
+class Instance;
 
-    class Sampler;
+class Buffer;
 
-    using BufferVec = std::vector <std::shared_ptr<Buffer>>;
-    using TextureVec = std::vector <std::shared_ptr<Texture>>;
-    using SamplerVec = std::vector <std::shared_ptr<Sampler>>;
+class Texture;
+
+class Sampler;
+
+using BufferVec  = std::vector<std::shared_ptr<Buffer>>;
+using TextureVec = std::vector<std::shared_ptr<Texture>>;
+using SamplerVec = std::vector<std::shared_ptr<Sampler>>;
 
 #pragma region vk::BindlessSetManager
 
-    class BindlessSetManager {
-    public:
-        BindlessSetManager() = default;
+class BindlessSetManager
+{
+  public:
+	BindlessSetManager() = default;
 
-        explicit BindlessSetManager(VkDevice device, float maxAnisotropy, std::string_view name = "");
+	explicit BindlessSetManager(VkDevice device, float maxAnisotropy, std::string_view name = "");
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        [[nodiscard]] VkDescriptorSetLayout get_desc_set_layout() const { return _desc_set_layout; }
+	[[nodiscard]] VkDescriptorSetLayout get_desc_set_layout() const { return _desc_set_layout; }
 
-        [[nodiscard]] const VkDescriptorSet &get_desc_set() const { return _desc_set; }
+	[[nodiscard]] const VkDescriptorSet &get_desc_set() const { return _desc_set; }
 
-        void add_image(VkDevice device, uint32_t id, VkImageView imageView);
+	VkDescriptorPool get_desc_pool() { return _desc_pool; }
 
-        void add_sampler(VkDevice device, uint32_t id, const std::shared_ptr <Sampler> &sampler);
+	void add_image(VkDevice device, uint32_t id, VkImageView imageView);
 
-    private:
-        std::string _debug_name;
+	void add_sampler(VkDevice device, uint32_t id, const std::shared_ptr<Sampler> &sampler);
 
-        VkDescriptorPool _desc_pool = VK_NULL_HANDLE;
-        VkDescriptorSetLayout _desc_set_layout = VK_NULL_HANDLE;
-        VkDescriptorSet _desc_set = VK_NULL_HANDLE;
+  private:
+	std::string _debug_name;
 
-        std::shared_ptr <Sampler> _nearest_sampler = nullptr;
-        std::shared_ptr <Sampler> _linear_sampler = nullptr;
-        std::shared_ptr <Sampler> _shadow_map_sampler = nullptr;
+	VkDescriptorPool      _desc_pool       = VK_NULL_HANDLE;
+	VkDescriptorSetLayout _desc_set_layout = VK_NULL_HANDLE;
+	VkDescriptorSet       _desc_set        = VK_NULL_HANDLE;
 
-    private:
-        void init(VkDevice device, float maxAnisotropy);
+	std::shared_ptr<Sampler> _nearest_sampler    = nullptr;
+	std::shared_ptr<Sampler> _linear_sampler     = nullptr;
+	std::shared_ptr<Sampler> _shadow_map_sampler = nullptr;
 
-        void init_default_sampler(VkDevice device, float maxAnisotropy);
-    };
+  private:
+	void init(VkDevice device, float maxAnisotropy);
+
+	void init_default_sampler(VkDevice device, float maxAnisotropy);
+};
 
 #pragma endregion
 
 #pragma region vk::Swapchain
 
-    class Swapchain {
-    public:
-        Swapchain() = default;
+class Swapchain
+{
+  public:
+	Swapchain() = default;
 
-        Swapchain(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height, bool vsync,
-                  std::string_view name = "");
+	Swapchain(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height, bool vsync,
+	          std::string_view name = "");
 
-        void reinit(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height);
+	void reinit(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height);
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        void begin_frame(VkDevice device, size_t frameIndex) const;
+	void begin_frame(VkDevice device, size_t frameIndex) const;
 
-        void resent_fence(VkDevice device, size_t frameIndex) const;
+	void resent_fence(VkDevice device, size_t frameIndex) const;
 
-        std::pair <uint32_t, std::shared_ptr<Texture>> acquire_image(VkDevice device, size_t frameIndex);
+	std::pair<uint32_t, std::shared_ptr<Texture>> acquire_image(VkDevice device, size_t frameIndex);
 
-        void
-        submit_and_present(VkCommandBuffer cmd, VkQueue graphicsQueue, size_t frameIndex, uint32_t swapchainImageIndex);
+	void submit_and_present(VkCommandBuffer cmd, VkQueue graphicsQueue, size_t frameIndex, uint32_t swapchainImageIndex);
 
-        VkImageView get_image_view(size_t swapchainImageIndex);
+	VkImageView get_image_view(size_t swapchainImageIndex);
+	uint32_t    get_image_count() { return _swapchain.image_count; }
 
-        [[nodiscard]] bool required_reinit() const;
+	[[nodiscard]] bool required_reinit() const;
 
-        [[nodiscard]] uint32_t current_swapchain_image_index() const;
+	[[nodiscard]] uint32_t current_swapchain_image_index() const;
 
-        [[nodiscard]] VkExtent2D swapchain_extent() const;
+	[[nodiscard]] VkExtent2D swapchain_extent() const;
 
-    private:
-        bool _is_initialized = false;
-        std::string _debug_name;
+  private:
+	bool        _is_initialized = false;
+	std::string _debug_name;
 
-        bool _dirty = false;
-        bool _vsync = true;
+	bool _dirty = false;
+	bool _vsync = true;
 
-        struct FrameData {
-            VkSemaphore swapchain_semaphore;
-            VkSemaphore render_semaphore;
-            VkFence render_fence;
-        };
+	struct FrameData
+	{
+		VkSemaphore swapchain_semaphore;
+		VkSemaphore render_semaphore;
+		VkFence     render_fence;
+	};
 
-        std::array<FrameData, FRAME_OVERLAP> _frames{};
+	std::array<FrameData, FRAME_OVERLAP> _frames{};
 
-        vkb::Swapchain _swapchain = {};
+	vkb::Swapchain _swapchain = {};
 
-        TextureVec _swapchain_images;
-        uint32_t _current_image_index = 0;
+	TextureVec _swapchain_images;
+	uint32_t   _current_image_index = 0;
 
-    private:
-        void init(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height);
-    };
+  private:
+	void init(const vkb::Device &device, VkFormat format, uint32_t width, uint32_t height);
+};
 
 #pragma endregion
 
 #pragma region vk::Shader
 
-    class Shader {
-    public:
-        WVK_MOVABLE_ONLY(Shader)
+class Shader
+{
+  public:
+	WVK_MOVABLE_ONLY(Shader)
 
-        explicit Shader(VkDevice device, VkShaderStageFlagBits stage, std::string_view filename,
-                        std::string_view entryPoint, std::string_view name);
+	explicit Shader(VkDevice device, VkShaderStageFlagBits stage, std::string_view filename,
+	                std::string_view entryPoint, std::string_view name);
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        [[nodiscard]] VkShaderModule handle() const;
+	[[nodiscard]] VkShaderModule handle() const;
 
-        [[nodiscard]] VkShaderStageFlagBits stage() const;
+	[[nodiscard]] VkShaderStageFlagBits stage() const;
 
-    private:
-        std::string _debug_name;
+  private:
+	std::string _debug_name;
 
-        VkShaderModule _module = VK_NULL_HANDLE;
-        VkShaderStageFlagBits _stage = VK_SHADER_STAGE_ALL;
-        std::string _entry_point;
+	VkShaderModule        _module = VK_NULL_HANDLE;
+	VkShaderStageFlagBits _stage  = VK_SHADER_STAGE_ALL;
+	std::string           _entry_point;
 
-    private:
-        void init(VkDevice device, std::string_view filename);
-    };
+  private:
+	void init(VkDevice device, std::string_view filename);
+};
 
 #pragma endregion
 
@@ -144,54 +154,73 @@ namespace wvk::gfx {
  */
 #pragma region vk::Buffer
 
-    class Buffer final {
-    public:
-        WVK_MOVABLE_ONLY(Buffer);
+class Buffer final
+{
+  public:
+	Buffer() = default;
 
-        explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VkDeviceSize size, VkBufferUsageFlags usage,
-                        Buffer *actualBuffer, std::string_view name = "");
+	explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VkDeviceSize size, VkBufferUsageFlags usage, Buffer *actualBuffer, std::string_view name = "");
+	explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VmaAllocationCreateInfo *allocationInfo, const VkBufferCreateInfo *bufferInfo, std::string_view name = "");
 
-        explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VmaAllocationCreateInfo *allocationInfo,
-                        const VkBufferCreateInfo *bufferInfo, std::string_view name = "");
+	void cleanup();
 
-        void cleanup();
+	inline VkBuffer     handle() const { return _handle; }
+	inline VkDeviceSize size() const { return _size; }
 
-        inline VkBuffer handle() const { return _handle; }
+	void upload(VkDeviceSize offset = 0) const;
+	void upload(VkDeviceSize offset = 0, VkDeviceSize size = 0) const;
+	void upload_only(VkDevice);
+	void upload_staging_buffer_to_gpu(const VkCommandBuffer &cmd, uint32_t srcOffset = 0, uint32_t dstOffset = 0) const;
 
-        inline VkDeviceSize size() const { return _size; }
+	void copy_data_to_buffer(const void *data, VkDeviceSize size, VkDeviceSize offset = 0) const;
 
-        void upload(VkDeviceSize offset = 0) const;
+	VkDeviceAddress device_address(VkDevice device) const;
 
-        void upload(VkDeviceSize offset = 0, VkDeviceSize size = 0) const;
+  private:
+	std::string _debug_name;
 
-        void upload_only(VkDevice);
+	VmaAllocator             _allocator;
+	VmaAllocation            _allocation             = VK_NULL_HANDLE;
+	VmaAllocationInfo        _allocation_info        = {};
+	VmaAllocationCreateInfo *_allocation_create_info = {};
+	mutable VkDeviceAddress  _buffer_device_address  = 0;
+	mutable void            *_mapped_memory          = nullptr;
 
-        void
-        upload_staging_buffer_to_gpu(const VkCommandBuffer &cmd, uint32_t srcOffset = 0, uint32_t dstOffset = 0) const;
+	VkDeviceSize                               _size;
+	VkBuffer                                   _handle                   = VK_NULL_HANDLE;
+	VkBufferUsageFlags                         _usages                   = 0;
+	Buffer                                    *_actual_buffer_if_staging = nullptr;
+	std::unordered_map<VkFormat, VkBufferView> _buffer_views;
+};
 
-        void copy_data_to_buffer(const void *data, size_t size) const;
+/**
+ * NBuffer
+ */
+class NBuffer final
+{
+  public:
+	NBuffer() = default;
 
-        VkDeviceAddress device_address(VkDevice device) const;
+	explicit NBuffer(Instance &instance, VkDeviceSize size, VkBufferUsageFlags usages, size_t numFramesInFlight, std::string_view name = "");
 
-        VkBufferView request_buffer_view(VkFormat viewFormat);
+	void init(Instance &instance, VkDeviceSize size, VkBufferUsageFlags usages, size_t numFramesInFlight, std::string_view name = "");
+	void cleanup(VkDevice device);
 
-    private:
-        std::string _debug_name;
+	void upload(VkCommandBuffer cmd, size_t frameIndex, void *data, VkDeviceSize size, VkDeviceSize offset, bool sync = true);
 
-        VmaAllocator _allocator;
-        VmaAllocation _allocation = VK_NULL_HANDLE;
-        VmaAllocationInfo _allocation_info = {};
-        VmaAllocationCreateInfo *_allocation_create_info = {};
-        mutable VkDeviceAddress _buffer_device_address = 0;
-        mutable void *_mapped_memory = nullptr;
+	Buffer handle() { return _gpu_buffer; }
 
-        VkDeviceSize _size;
-        VkBuffer _handle = VK_NULL_HANDLE;
-        VkBufferUsageFlags _usages = 0;
-        Buffer *_actual_buffer_if_staging = nullptr;
-        std::unordered_map <VkFormat, VkBufferView> _buffer_views;
-    };
+	size_t size() { return _gpu_buffer_size; }
 
+  private:
+	bool        _is_initialized = false;
+	std::string _debug_name;
+
+	size_t              _frames_in_flight = 0;
+	size_t              _gpu_buffer_size  = 0;
+	std::vector<Buffer> _stagings;
+	Buffer              _gpu_buffer;
+};
 #pragma endregion
 
 /**
@@ -199,81 +228,81 @@ namespace wvk::gfx {
  */
 #pragma region vk::Texture
 
-    class WVK_API  Texture final {
-    public:
-        WVK_MOVABLE_ONLY(Texture)
+class WVK_API Texture final
+{
+  public:
+	WVK_MOVABLE_ONLY(Texture)
 
-        static const auto NULL_BINDLESS_ID = std::numeric_limits<uint32_t>::max();
+	static const auto NULL_BINDLESS_ID = std::numeric_limits<uint32_t>::max();
 
-        Texture(VkDevice device, VkImage image, VkFormat format, VkExtent3D extents, uint32_t numLayers, bool multiView,
-                std::string_view name = "");
+	Texture(VkDevice device, VkImage image, VkFormat format, VkExtent3D extents, uint32_t numLayers, bool multiView, std::string_view name = "");
 
-        Texture(VkDevice device, VmaAllocator allocator, const CreateImageInfo &createInfo,
-                std::optional <VmaAllocationCreateInfo> customAllocationCreateInfo, std::string_view name = "");
+	Texture(VkDevice device, VmaAllocator allocator, const CreateTextureInfo &createInfo, std::optional<VmaAllocationCreateInfo> customAllocationCreateInfo, std::string_view name = "");
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        [[nodiscard]] VkImage handle() const { return _handle; }
+	[[nodiscard]] VkImage handle() const { return _handle; }
 
-        [[nodiscard]] VkFormat format() const { return _format; }
+	[[nodiscard]] VkFormat format() const { return _format; }
 
-        [[nodiscard]] VkImageAspectFlags aspect_flag() const;
+	[[nodiscard]] VkImageAspectFlags aspect_flag() const;
 
-        [[nodiscard]] VkDeviceSize image_size() const { return _size; }
+	[[nodiscard]] VkDeviceSize image_size() const { return _size; }
 
-        [[nodiscard]] VkExtent2D
-        extent() const { return VkExtent2D{.width = _extents.width, .height = _extents.height}; }
+	[[nodiscard]] VkDeviceSize size() const { return pixel_size_in_bytes() * extent3d().width * extent3d().height * extent3d().depth; }
 
-        [[nodiscard]] VkExtent3D extent3d() const { return _extents; }
+	[[nodiscard]] VkExtent2D extent() const { return VkExtent2D{.width = _extents.width, .height = _extents.height}; }
 
-        [[nodiscard]] bool is_depth() const;
+	[[nodiscard]] VkExtent3D extent3d() const { return _extents; }
 
-        [[nodiscard]] bool is_stencil() const;
+	[[nodiscard]] bool is_depth() const;
 
-        //	void update_and_generate_mips(VkCommandBuffer cmd, const Buffer *stagingBuffer, void *data);
-        void upload_only(VkCommandBuffer cmd, const Buffer *stagingBuffer, uint32_t layer = 0);
+	[[nodiscard]] bool is_stencil() const;
 
-        VkImageView image_view(uint32_t mipLevel = UINT32_MAX);
+	//	void update_and_generate_mips(VkCommandBuffer cmd, const Buffer *stagingBuffer, void *data);
+	void upload_only(VkCommandBuffer cmd, const Buffer *stagingBuffer, uint32_t layer = 0);
 
-        VkImageView create_image_view(VkDevice device, VkFormat format, uint32_t numMipsLevels, uint32_t layers);
+	VkImageView image_view(uint32_t mipLevel = UINT32_MAX);
 
-        void set_bindless_id(const uint32_t id) { _id = id; }
+	VkImageView create_image_view(VkDevice device, VkFormat format, uint32_t numMipsLevels, uint32_t layers);
 
-        [[nodiscard]] inline uint32_t get_bindless_id() const { return _id; }
+	void set_bindless_id(const uint32_t id) { _id = id; }
 
-        [[nodiscard]] inline uint32_t pixel_size_in_bytes() const { return bytes_per_pixel(_format); }
+	[[nodiscard]] inline uint32_t get_bindless_id() const { return _id; }
 
-        [[nodiscard]] bool is_initialized() const { return _id != NULL_BINDLESS_ID; }
+	[[nodiscard]] inline uint32_t pixel_size_in_bytes() const { return bytes_per_pixel(_format); }
 
-    private:
-        std::string _debug_name;
+	[[nodiscard]] bool is_initialized() const { return _id != NULL_BINDLESS_ID; }
 
-        VmaAllocator _allocator = VK_NULL_HANDLE;
-        VmaAllocationCreateInfo _allocation_create_info = {};
-        VmaAllocation _allocation = VK_NULL_HANDLE;
-        VmaAllocationInfo _allocation_info = {};
+  private:
+	std::string _debug_name;
 
-        VkDeviceSize _size = 0;
-        VkImageCreateFlags _flags = 0;
-        VkImageUsageFlags _usage = 0;
-        VkImageType _type = VK_IMAGE_TYPE_2D;
-        VkImageLayout _layout = VK_IMAGE_LAYOUT_UNDEFINED;
-        VkImage _handle = VK_NULL_HANDLE;
-        VkImageView _view = VK_NULL_HANDLE;
-        VkFormat _format = VK_FORMAT_UNDEFINED;
-        VkExtent3D _extents;
-        VkImageViewType _view_type = VK_IMAGE_VIEW_TYPE_2D;
-        VkSampleCountFlags _msaa_samples = VK_SAMPLE_COUNT_1_BIT;
-        VkImageTiling _tiling = VK_IMAGE_TILING_OPTIMAL;
-        bool _own_image = false;
-        uint32_t _mip_levels = 1;
-        uint32_t _layer_count = 1;
-        bool _multi_view = false;
-        bool _generate_mips = false;
-        std::unordered_map <uint32_t, VkImageView> _image_view_framebuffers;
+	VmaAllocator            _allocator              = VK_NULL_HANDLE;
+	VmaAllocationCreateInfo _allocation_create_info = {};
+	VmaAllocation           _allocation             = VK_NULL_HANDLE;
+	VmaAllocationInfo       _allocation_info        = {};
 
-        uint32_t _id = NULL_BINDLESS_ID;
-    };
+	VkDeviceSize                              _size   = 0;
+	VkImageCreateFlags                        _flags  = 0;
+	VkImageUsageFlags                         _usage  = 0;
+	VkImageType                               _type   = VK_IMAGE_TYPE_2D;
+	VkImageLayout                             _layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	VkImage                                   _handle = VK_NULL_HANDLE;
+	VkImageView                               _view   = VK_NULL_HANDLE;
+	VkFormat                                  _format = VK_FORMAT_UNDEFINED;
+	VkExtent3D                                _extents;
+	VkImageViewType                           _view_type     = VK_IMAGE_VIEW_TYPE_2D;
+	VkSampleCountFlags                        _msaa_samples  = VK_SAMPLE_COUNT_1_BIT;
+	VkImageTiling                             _tiling        = VK_IMAGE_TILING_OPTIMAL;
+	bool                                      _own_image     = false;
+	uint32_t                                  _mip_levels    = 1;
+	uint32_t                                  _layer_count   = 1;
+	bool                                      _multi_view    = false;
+	bool                                      _generate_mips = false;
+	std::unordered_map<uint32_t, VkImageView> _image_view_framebuffers;
+
+	uint32_t _id = NULL_BINDLESS_ID;
+};
 
 #pragma endregion
 
@@ -285,54 +314,56 @@ namespace wvk::gfx {
  */
 #pragma region vk::Sampler
 
-    class Sampler {
-    public:
-        WVK_MOVABLE_ONLY(Sampler);
+class Sampler
+{
+  public:
+	WVK_MOVABLE_ONLY(Sampler);
 
-        explicit Sampler(VkDevice device, const VkSamplerCreateInfo *createInfo, std::string_view name = "");
+	explicit Sampler(VkDevice device, const VkSamplerCreateInfo *createInfo, std::string_view name = "");
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        [[nodiscard]] VkSampler handle() const;
+	[[nodiscard]] VkSampler handle() const;
 
-    private:
-        std::string _debug_name;
+  private:
+	std::string _debug_name;
 
-        VkSampler _handle = VK_NULL_HANDLE;
-    };
+	VkSampler _handle = VK_NULL_HANDLE;
+};
 
 #pragma endregion
 #pragma region vk::ImmediateCommandQueue
 
-    class ImmediateCommandQueue {
-    public:
-        ImmediateCommandQueue() = default;
+class ImmediateCommandQueue
+{
+  public:
+	ImmediateCommandQueue() = default;
 
-        explicit ImmediateCommandQueue(VkDevice device, uint32_t graphicsFamilyIndex, VkQueue graphicsQueue,
-                                       std::string_view name = "immediate command");
+	explicit ImmediateCommandQueue(VkDevice device, uint32_t graphicsFamilyIndex, VkQueue graphicsQueue,
+	                               std::string_view name = "immediate command");
 
-        void cleanup(VkDevice device);
+	void cleanup(VkDevice device);
 
-        void submit(VkDevice device,
+	void submit(VkDevice device,
 
-        std::function<
-        void(VkCommandBuffer
-        cmd)> &&callback) const;
+	            std::function<
+	                void(VkCommandBuffer
+	                         cmd)> &&callback) const;
 
-    private:
-        std::string _debug_name;
+  private:
+	std::string _debug_name;
 
-        bool _is_initialized = false;
+	bool _is_initialized = false;
 
-        VkQueue _graphics_queue = VK_NULL_HANDLE;
+	VkQueue _graphics_queue = VK_NULL_HANDLE;
 
-        VkCommandPool _command_pool = VK_NULL_HANDLE;
-        VkCommandBuffer _command_buffer = VK_NULL_HANDLE;
-        VkFence _fence = VK_NULL_HANDLE;
+	VkCommandPool   _command_pool   = VK_NULL_HANDLE;
+	VkCommandBuffer _command_buffer = VK_NULL_HANDLE;
+	VkFence         _fence          = VK_NULL_HANDLE;
 
-    private:
-        void init(VkDevice device, uint32_t graphicsFamilyIndex);
-    };
+  private:
+	void init(VkDevice device, uint32_t graphicsFamilyIndex);
+};
 
 #pragma endregion
 }        // namespace wvk::gfx

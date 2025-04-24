@@ -6,6 +6,7 @@
 #include <wvk/common/wvk_pch.hpp>
 #include <wvk/common/wvk_defines.hpp>
 #include <wvk/common/wvk_logger.hpp>
+#include <wvk/common/wvk_filesystem.hpp>
 
 // -------------------------------------------
 // Core
@@ -17,5 +18,5 @@
 // Graphics
 // -------------------------------------------
 #include "wvk/gfx/wvk_gfx.hpp"
-#include "wvk/gfx/wvk_gfxvulkan.hpp"
 #include "wvk/gfx/wvk_gfxtypes.hpp"
+#include "wvk/gfx/wvk_gfxvulkan.hpp"

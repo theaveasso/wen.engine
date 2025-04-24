@@ -12,16 +12,18 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
 endif ()
 
 include_directories(wvk)
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
+        SHARED
         ${SOURCES_FILES}
-        ${HEADERS_FILES}
-        wvk/gfx/wvk_volkimpl.cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+        ${HEADERS_FILES})
 
-target_precompile_headers(${PROJECT_NAME} PUBLIC "wvk/common/wvk_pch.hpp")
+target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
-target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
+target_precompile_headers(${PROJECT_NAME}
+        PUBLIC
+        "wvk/common/wvk_pch.hpp")
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
@@ -36,7 +38,11 @@ target_link_libraries(${PROJECT_NAME}
         fmt::fmt
         spdlog::spdlog
         nlohmann_json::nlohmann_json
-        stb)
+        stb
+        imgui
+
+        PRIVATE
+        glfw)
 
 #engine
 target_compile_definitions(

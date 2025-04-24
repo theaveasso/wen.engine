@@ -180,14 +180,17 @@ inline VkImageMemoryBarrier2 image_memory_barrier_2(
 }
 
 inline VkDependencyInfo dependency_info(
-    std::span<const VkImageMemoryBarrier2> barrier_2)
+    std::span<const VkImageMemoryBarrier2>  imageBarrier  = {},
+    std::span<const VkBufferMemoryBarrier2> bufferBarrier = {})
 {
 	VkDependencyInfo info        = {};
 	info.sType                   = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
 	info.pNext                   = VK_NULL_HANDLE;
 	info.dependencyFlags         = 0;
-	info.imageMemoryBarrierCount = WVK_CAST(uint32_t, barrier_2.size());
-	info.pImageMemoryBarriers    = barrier_2.data();
+	info.imageMemoryBarrierCount  = WVK_CAST(uint32_t, imageBarrier.size());
+	info.pImageMemoryBarriers     = imageBarrier.data();
+	info.bufferMemoryBarrierCount = WVK_CAST(uint32_t, bufferBarrier.size());
+	info.pBufferMemoryBarriers    = bufferBarrier.data();
 	return info;
 }
 
@@ -660,6 +663,61 @@ inline VkBufferCreateInfo buffer_create_info(
 	info.size               = size;
 	info.usage              = usages;
 	info.sharingMode        = VK_SHARING_MODE_EXCLUSIVE;
+	return info;
+}
+
+inline VkBufferMemoryBarrier2 buffer_memory_barrier2(
+    VkPipelineStageFlags2 srcStageMask,
+    VkAccessFlags2        srcAccessMask,
+    VkPipelineStageFlags2 dstStageMask,
+    VkAccessFlags2        dstAccessMask,
+    VkBuffer              buffer,
+    VkDeviceSize          offset          = 0,
+    VkDeviceSize          size            = VK_WHOLE_SIZE,
+    uint32_t              srcQFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    uint32_t              dstQFamilyIndex = VK_QUEUE_FAMILY_IGNORED)
+{
+	VkBufferMemoryBarrier2 info = {};
+	info.sType                  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+	info.pNext                  = VK_NULL_HANDLE;
+	info.srcStageMask           = srcStageMask;
+	info.srcAccessMask          = srcAccessMask;
+	info.dstStageMask           = dstStageMask;
+	info.dstAccessMask          = dstAccessMask;
+	info.srcQueueFamilyIndex    = srcQFamilyIndex;
+	info.dstQueueFamilyIndex    = dstQFamilyIndex;
+	info.buffer                 = buffer;
+	info.offset                 = offset;
+	info.size                   = size;
+	return info;
+}
+
+inline VkBufferCopy2 buffer_copy2(
+    VkDeviceSize srcOffset,
+    VkDeviceSize dstOffset,
+    VkDeviceSize size)
+{
+	VkBufferCopy2 info = {};
+	info.sType         = VK_STRUCTURE_TYPE_BUFFER_COPY_2;
+	info.pNext         = VK_NULL_HANDLE;
+	info.srcOffset     = srcOffset;
+	info.dstOffset     = dstOffset;
+	info.size          = size;
+	return info;
+}
+
+inline VkCopyBufferInfo2 copy_buffer_info2(
+    VkBuffer             srcBuffer,
+    VkBuffer             dstBuffer,
+    const VkBufferCopy2 *region)
+{
+	VkCopyBufferInfo2 info = {};
+	info.sType             = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2;
+	info.pNext             = VK_NULL_HANDLE;
+	info.srcBuffer         = srcBuffer;
+	info.dstBuffer         = dstBuffer;
+	info.regionCount       = 1;
+	info.pRegions          = region;
 	return info;
 }
 }        // namespace wvk::init

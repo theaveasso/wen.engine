@@ -3,7 +3,7 @@
 #include <glm/vec2.hpp>
 
 #include "wvk/common/wvk_pch.hpp"
-#include "wvk/gfx/wvk_gfx.hpp"
+#include "wvk/gfx/wvk_gfxinst.hpp"
 
 struct GLFWwindow;
 

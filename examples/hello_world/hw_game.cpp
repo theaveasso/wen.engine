@@ -4,6 +4,7 @@ HWGame::HWGame()
 {
 	_app_config.appName = "Hello world!";
 }
+
 void HWGame::on_init()
 {
 	_draw_image = _instance.create_draw_image(_format, _app_config.renderArea);
@@ -11,9 +12,13 @@ void HWGame::on_init()
 
 	_game_camera.init_ortho_2d(WVK_CAST(glm::vec2, get_game_screen_size()));
 }
+
 void HWGame::on_update(float dt)
 {
+	ImGui::SetCurrentContext(_instance.get_imgui_ctx());
+	ImGui::ShowDemoWindow();
 }
+
 void HWGame::on_draw()
 {
 	VkCommandBuffer cmd = _instance.begin_frame();
@@ -38,14 +43,26 @@ void HWGame::on_draw()
 	    glm::vec2{0.0f},
 	    0.f,
 	    glm::vec4{1.0f, 0.0f, 0.0f, 1.0f});
+	_sprite_renderer.draw_rectangle_pro(
+	    _instance,
+	    wvk::core::Rectangle{glm::vec2{58.f}, glm::vec2{128.f}},
+	    glm::vec2{0.0f},
+	    0.f,
+	    glm::vec4{1.0f, 0.0f, 1.0f, 1.0f});
+	_sprite_renderer.draw_rectangle_pro(
+	    _instance,
+	    wvk::core::Rectangle{glm::vec2{500.f}, glm::vec2{428.f}},
+	    glm::vec2{0.0f},
+	    0.f,
+	    glm::vec4{1.0f, 1.0f, 0.0f, 1.0f});
 
 	_sprite_renderer.end_draw();
 
 	_sprite_renderer.draw(cmd, _instance, _draw_image, _game_camera.get_view_proj());
 
-	wvk::EndFrameParams endFrameParams{
+	const wvk::EndFrameParams endFrameParams{
+	    .drawImGui = true};
 
-	};
 	_instance.end_frame(cmd, _draw_image, endFrameParams);
 }
 void HWGame::on_cleanup()

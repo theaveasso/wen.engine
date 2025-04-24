@@ -15,6 +15,9 @@ class BindlessSetManager;
 class Buffer;
 class Texture;
 
+class ImGuiRenderer;
+class Instance;
+
 struct WVK_API InstanceImpl
 {
 	std::string appName;
@@ -28,6 +31,7 @@ struct WVK_API InstanceImpl
 	Swapchain             *swapchain;
 	ImmediateCommandQueue *immediateCommandQueue;
 	BindlessSetManager    *bindlessSetManager;
+	ImGuiRenderer         *imguiRenderer;
 
 	std::array<wvk::FrameData, FRAME_OVERLAP> frames;
 	uint32_t                                  frameNumber = 0;
@@ -39,11 +43,15 @@ struct WVK_API InstanceImpl
 	bool isInitialized = false;
 
 	void _vulkan_init(GLFWwindow *window);
+
 	void _create_vma_allocator();
 	void _create_frame_data();
+
 	void _create_default_texture();
 
-	std::shared_ptr<Buffer> _create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "");
+	TextureId _create_texture_w_pixels(VkFormat format, VkImageUsageFlags flags, VkExtent2D extent, const void *data, std::string_view = "");
+
+	Buffer _create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "");
 
 	VkCommandBuffer _begin_frame();
 

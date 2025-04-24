@@ -4,9 +4,10 @@
 
 #include "common/wvk_error.hpp"
 #include "common/wvk_filesystem.hpp"
-#include "gfx/wvk_gfxutils.hpp"
+
+#include "wvk_gfxinst.hpp"
+#include "wvk_gfxutils.hpp"
 #include "wvk_gfxvkinit.hpp"
-#include <volk.h>
 
 namespace wvk::gfx
 {
@@ -560,14 +561,17 @@ void Buffer::upload_staging_buffer_to_gpu(
 		vkCmdCopyBuffer(cmd, handle(), _actual_buffer_if_staging->handle(), 1, &region);
 	}
 }
+
 void Buffer::copy_data_to_buffer(
     const void *data,
-    size_t      size) const
+    VkDeviceSize size,
+    VkDeviceSize offset) const
 {
 	WVK_ASSERT_MSG(size <= _size, "buffer size must be large or equal the size!");
 	WVK_ASSERT_MSG(_mapped_memory != VK_NULL_HANDLE, "buffer memory must be mapped before copying!");
-	memcpy(_mapped_memory, data, size);
+	memcpy(WVK_CAST(uint8_t*, _mapped_memory) + offset, data, WVK_CAST(size_t, size));
 }
+
 VkDeviceAddress Buffer::device_address(VkDevice device) const
 {
 	if (_actual_buffer_if_staging)
@@ -588,10 +592,105 @@ VkDeviceAddress Buffer::device_address(VkDevice device) const
 	return 0;
 #endif
 }
-VkBufferView Buffer::request_buffer_view(VkFormat viewFormat)
+
+NBuffer::NBuffer(
+    Instance          &instance,
+    VkDeviceSize       size,
+    VkBufferUsageFlags usages,
+    size_t             numFramesInFlight,
+    std::string_view   name) :
+    _debug_name("nbuffer " + std::string(name)),
+    _frames_in_flight(numFramesInFlight),
+    _gpu_buffer_size(size)
 {
-	return _buffer_views[viewFormat];
+	WVK_ASSERT_MSG(numFramesInFlight > 0, "");
+	WVK_ASSERT_MSG(size > 0, "");
+
+	_gpu_buffer = instance.create_gpu_buffer(size, usages, name);
+
+	_stagings.resize(numFramesInFlight);
+	for (size_t i = 0; i < numFramesInFlight; ++i)
+	{
+		_stagings[i] = instance.create_persistent_buffer(size, usages, name);
+	}
+
+	_is_initialized = true;
 }
+
+void NBuffer::cleanup(
+    VkDevice device)
+{
+	for (auto &staging : _stagings)
+	{
+		staging.cleanup();
+	}
+	_stagings.clear();
+	_gpu_buffer.cleanup();
+	_is_initialized = false;
+}
+
+void NBuffer::upload(
+    VkCommandBuffer cmd,
+    size_t          frameIndex,
+    void           *data,
+    VkDeviceSize    size,
+    VkDeviceSize    offset,
+    bool            sync)
+{
+	WVK_ASSERT_MSG(_is_initialized, "");
+	WVK_ASSERT_MSG(frameIndex < _frames_in_flight, "");
+	WVK_ASSERT_MSG(offset + size <= _gpu_buffer_size, "");
+
+	if (_gpu_buffer_size == 0)
+	{
+		return;
+	}
+
+	// sync with previous read
+	if (sync)
+	{
+		const VkBufferMemoryBarrier2 bufferBarrier =
+		    init::buffer_memory_barrier2(
+		        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+		        VK_ACCESS_2_MEMORY_READ_BIT,
+		        VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT,
+		        _gpu_buffer.handle());
+
+		const VkDependencyInfo depInfo =
+		    init::dependency_info({}, {&bufferBarrier, 1});
+
+		vkCmdPipelineBarrier2(cmd, &depInfo);
+	}
+
+	Buffer stage = _stagings[frameIndex];
+	stage.copy_data_to_buffer(data, size, offset);
+
+	const VkBufferCopy2 region =
+	    init::buffer_copy2(offset, offset, _gpu_buffer_size);
+
+	const VkCopyBufferInfo2 copyBufferInfo2 =
+	    init::copy_buffer_info2(stage.handle(), _gpu_buffer.handle(), &region);
+
+	vkCmdCopyBuffer2(cmd, &copyBufferInfo2);
+
+	if (sync)
+	{
+		const VkBufferMemoryBarrier2 bufferBarrier =
+		    init::buffer_memory_barrier2(
+		        VK_PIPELINE_STAGE_2_COPY_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT,
+		        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
+		        _gpu_buffer.handle());
+
+		const VkDependencyInfo depInfo =
+		    init::dependency_info({}, {&bufferBarrier, 1});
+
+		vkCmdPipelineBarrier2(cmd, &depInfo);
+	}
+}
+
 #pragma endregion
 #pragma region vk::Sampler
 Sampler::Sampler(
@@ -622,7 +721,7 @@ VkSampler Sampler::handle() const
 Texture::Texture(
     VkDevice                               device,
     VmaAllocator                           allocator,
-    const CreateImageInfo                 &createInfo,
+    const CreateTextureInfo               &createInfo,
     std::optional<VmaAllocationCreateInfo> customAllocationCreateInfo,
     std::string_view                       name) :
     _debug_name("texture " + std::string{name}),
@@ -630,14 +729,14 @@ Texture::Texture(
     _flags(createInfo.flags),
     _format(createInfo.format),
     _usage(createInfo.usage),
-    _extents(createInfo.extents),
+    _extents(createInfo.extent),
     _layer_count(createInfo.numLayers),
     _msaa_samples(createInfo.sampler),
     _tiling(createInfo.tiling),
     _own_image(true)
 {
 	(void) name;
-	WVK_ASSERT_MSG(createInfo.extents.width > 0 && createInfo.extents.height > 0,
+	WVK_ASSERT_MSG(createInfo.extent.width > 0 && createInfo.extent.height > 0,
 	               "texture dimensions cannot have dimensions equal to 0.");
 
 	static const VmaAllocationCreateInfo defaultAllocInfo =

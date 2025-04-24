@@ -17,7 +17,7 @@ layout (location = 0) out vec4 out_color;
 #define TEXTURE_SHADER_ID   1
 
 void main() {
-    vec4 tex_color = samplerTexture2dNearest(textureId, in_uv);
+    vec4 tex_color = sampleTexture2dNearest(textureId, in_uv);
     if (shaderId == TEXTURE_SHADER_ID) {
         tex_color = vec4(1.0, 1.0, 1.0, tex_color.r);
     }
