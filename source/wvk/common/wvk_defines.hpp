@@ -96,3 +96,16 @@
 
 using std::make_shared;
 using std::shared_ptr;
+
+namespace wvk
+{
+using TextureId                         = uint32_t;
+static constexpr size_t NULL_TEXTURE_ID = std::numeric_limits<uint32_t>::max();
+
+using MeshId                         = size_t;
+static constexpr size_t NULL_MESH_ID = std::numeric_limits<size_t>::max();
+
+using MaterialId                         = uint32_t;
+static constexpr size_t NULL_MATERIAL_ID = std::numeric_limits<uint32_t>::max();
+
+}        // namespace wvk

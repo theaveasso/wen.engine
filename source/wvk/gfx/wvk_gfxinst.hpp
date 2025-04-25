@@ -34,11 +34,18 @@ class WVK_API Instance final
 	Instance &operator=(wvk::gfx::Instance &&) noexcept;
 
 	void init(GLFWwindow *window, const char *appName, bool vsync);
+
 	void cleanup();
 
 	shared_ptr<Texture> get_texture(uint32_t index);
-	TextureId           get_white_texture_id();
-	TextureId           get_error_texture_id();
+
+	void register_tileset_texture(std::string_view relPath, TextureId id);
+
+	shared_ptr<Texture> get_texture(std::string_view relPath);
+
+	TextureId get_white_texture_id();
+
+	TextureId get_error_texture_id();
 
 	[[nodiscard]] Buffer create_buffer(VkDeviceSize size, VkBufferUsageFlags usages, VmaMemoryUsage memoryUsages, std::string_view name = "") const;
 

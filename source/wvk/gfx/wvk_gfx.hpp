@@ -13,6 +13,14 @@
 
 struct GLFWwindow;
 
+namespace wvk::core
+{
+class LdtkJson;
+class LdtkDefs;
+class LdtkLevel;
+class LdtkLayer;
+}        // namespace wvk::core
+
 namespace wvk::gfx
 {
 
@@ -42,7 +50,7 @@ struct WVK_API ImageData
 	int            channels = 0;
 };
 
-void load_image(const std::filesystem::path &path, ImageData *image);
+WVK_API void load_image(const std::filesystem::path &path, ImageData *image);
 
 // ---------------------------------------------------------------------------------------------
 // gfx::GameRenderer
@@ -256,7 +264,6 @@ struct WVK_API Sprite
 	Sprite() = default;
 	explicit Sprite(const std::shared_ptr<Texture> &texture);
 
-	std::shared_ptr<Texture> texture;
 	uint32_t                 texture_id = 0;
 	glm::vec2                texture_size;
 
@@ -267,7 +274,11 @@ struct WVK_API Sprite
 	glm::vec4 color = glm::vec4{1.f, 1.f, 1.f, 1.f};
 
 	void set_texture(const std::shared_ptr<Texture> &texture);
+
+	void set_texture_size(glm::vec2 size);
+
 	void set_texture_rect(const core::Rectangle &rec);
+
 	void set_pivot_pixel(const glm::ivec2 &pixel);
 };
 #pragma endregion
@@ -275,6 +286,7 @@ struct WVK_API Sprite
 // ---------------------------------------------------------------------------------------------
 // gfx::SpriteRenderer
 // ---------------------------------------------------------------------------------------------
+
 #pragma region gfx::SpriteRenderer
 class WVK_API SpriteRenderer
 {
@@ -302,6 +314,13 @@ class WVK_API SpriteRenderer
 	void draw_rectangle_v(Instance &instance, const glm::vec2 &position, const glm::vec2 &size, const glm::vec4 &color);
 	void draw_rectangle_rec(Instance &instance, const core::Rectangle &rec, const glm::vec4 &color);
 	void draw_rectangle_pro(Instance &instance, const core::Rectangle &rec, const glm::vec2 &origin, float rotation, const glm::vec4 &color);
+
+	// texture drawing functions
+	void draw_texture(Texture &texture, int posX, int posY, const ColorRGBA &tint = WHITE);                                                                                      // draw a texture 2d
+	void draw_texture_v(Texture &texture, glm::vec2 position, const ColorRGBA &tint = WHITE);                                                                                    // draw a texture 2d with position defined as glm::vec2
+	void draw_texture_ex(Texture &texture, glm::vec2 position, float rotation, float scale, const ColorRGBA &tint = WHITE);                                                      // draw a texture 2d with extended parameters
+	void draw_texture_rec(Texture &texture, const core::Rectangle &source, glm::vec2 position, const ColorRGBA &tint = WHITE);                                                   // draw a part of a texture defined by a rectangle
+	void draw_texture_pro(Texture &texture, const core::Rectangle &source, const core::Rectangle &dest, glm::vec2 origin, float rotation, const ColorRGBA &tint = WHITE);        // draw a part of a texture defined by a rectangle with 'pro' parameters
 
   private:
 	bool _is_initialized = false;
@@ -331,6 +350,17 @@ class WVK_API TextureCache
 
   private:
 	std::vector<Texture> textures;
+};
+
+// ---------------------------------------------------------------------------------------------
+// gfx::TileMapRenderer
+// ---------------------------------------------------------------------------------------------
+
+class WVK_API TileMapRenderer
+{
+  public:
+	static void draw_level(Instance &instance, SpriteRenderer &spriteRenderer, const core::LdtkLevel &level, const core::LdtkDefs &defs);
+	static void draw_layer(Instance &instance, SpriteRenderer &spriteRenderer, const core::LdtkLayer &layer, const core::LdtkDefs &defs);
 };
 
 // ---------------------------------------------------------------------------------------------

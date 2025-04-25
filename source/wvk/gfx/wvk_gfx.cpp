@@ -14,6 +14,8 @@
 #include "wvk_gfxvkinit.hpp"
 #include "wvk_gfxvulkan.hpp"
 
+#include "wvk/core/wvk_ldtktilemap.hpp"
+
 namespace wvk::gfx
 {
 
@@ -186,10 +188,15 @@ Sprite::Sprite(const std::shared_ptr<Texture> &texture)
 }
 void Sprite::set_texture(const std::shared_ptr<Texture> &t)
 {
-	texture      = t;
 	texture_id   = t->get_bindless_id();
 	texture_size = glm::vec2{t->extent().width, t->extent().height};
 }
+
+void Sprite::set_texture_size(glm::vec2 size)
+{
+	texture_size = size;
+}
+
 void Sprite::set_texture_rect(const core::Rectangle &)
 {
 }
@@ -254,6 +261,21 @@ void SpriteRenderer::draw(
 	    _sprite_draw_commands);
 }
 
+static Sprite make_sprite(
+    TextureId        textureId,
+    const glm::vec2 &textureSize,
+    const ColorRGBA &tint)
+{
+	Sprite outSprite;
+	outSprite.texture_id   = textureId;
+	outSprite.texture_size = textureSize;
+	outSprite.color        = tint;
+	outSprite.uv0          = {0.0, 0.0};
+	outSprite.uv1          = {1.0, 1.0};
+	outSprite.pivot        = {0.0, 0.0};
+	return outSprite;
+}
+
 void SpriteRenderer::draw_sprite(
     const Sprite    &sprite,
     const glm::vec2 &position,
@@ -279,14 +301,16 @@ void SpriteRenderer::draw_sprite(
 {
 	WVK_ASSERT_MSG(sprite.texture_id != Texture::NULL_BINDLESS_ID, "sprite texture invalid!");
 
-	glm::mat4       transformMatrix = transform;
-	const glm::vec2 size            = sprite.texture_size;
-	transformMatrix                 = glm::scale(transformMatrix, glm::vec3{size, 1.0f});
-	transformMatrix                 = glm::translate(transformMatrix, glm::vec3{-sprite.pivot, 0.f});
+	// debug draw
+	//	WVK_INFO("SPRITE UV0 {}", glm::to_string(sprite.uv0));
+	//	WVK_INFO("SPRITE UV1 {}", glm::to_string(sprite.uv1));
+	//	WVK_INFO("SPRITE texture size {}", glm::to_string(sprite.texture_size));
+	//	WVK_INFO("SPRITE transform matrix {}", glm::to_string(transformMatrix));
+	// debug draw
 
 	_sprite_draw_commands.push_back(
 	    SpriteDrawCommand{
-	        .transform = transformMatrix,
+	        .transform = transform,
 	        .uv0       = sprite.uv0,
 	        .uv1       = sprite.uv1,
 	        .color     = sprite.color,
@@ -357,7 +381,131 @@ void SpriteRenderer::draw_rectangle_pro(
 
 	draw_sprite(sprite, tm);
 }
+
+void SpriteRenderer::draw_texture(
+    Texture         &textureId,
+    int              posX,
+    int              posY,
+    const ColorRGBA &tint)
+{
+	draw_texture_v(textureId, glm::vec2{posX, posY}, tint);
+}
+void SpriteRenderer::draw_texture_v(
+    Texture         &texture,
+    glm::vec2        position,
+    const ColorRGBA &tint)
+{
+	Sprite    sprite    = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
+	draw_sprite(sprite, transform);
+}
+void SpriteRenderer::draw_texture_ex(
+    Texture         &texture,
+    glm::vec2        position,
+    float            rotation,
+    float            scale,
+    const ColorRGBA &tint)
+{
+	Sprite    sprite    = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
+	transform           = glm::rotate(transform, rotation, glm::vec3(0, 0, 1));
+	transform           = glm::scale(transform, glm::vec3(scale));
+	draw_sprite(sprite, transform);
+}
+void SpriteRenderer::draw_texture_rec(
+    Texture               &texture,
+    const core::Rectangle &source,
+    glm::vec2              position,
+    const ColorRGBA       &tint)
+{
+	Sprite sprite       = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	sprite.uv0          = core::pixel_coord_to_uv(glm::vec2(source.x, source.y), sprite.texture_size);
+	sprite.uv1          = core::pixel_coord_to_uv(glm::vec2(source.x + source.width, source.y + source.height), sprite.texture_size);
+	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
+	transform           = glm::scale(transform, glm::vec3(source.width, source.height, 1.0));
+	draw_sprite(sprite, transform);
+}
+void SpriteRenderer::draw_texture_pro(
+    Texture               &texture,
+    const core::Rectangle &source,
+    const core::Rectangle &dest,
+    glm::vec2              origin,
+    float                  rotation,
+    const ColorRGBA       &tint)
+{
+	Sprite sprite       = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	sprite.uv0          = core::pixel_coord_to_uv(glm::vec2(source.x, source.y), sprite.texture_size);
+	sprite.uv1          = core::pixel_coord_to_uv(glm::vec2(source.x + source.width, source.y + source.height), sprite.texture_size);
+	sprite.pivot        = origin;
+	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(dest.x, dest.y, 0.0f));
+	transform           = glm::rotate(transform, rotation, glm::vec3(0, 0, 1));
+	transform           = glm::scale(transform, glm::vec3(source.width, source.height, 1.0));
+	draw_sprite(sprite, transform);
+}
+
 #pragma endregion
+
+// ---------------------------------------------------------------------------------------------
+// gfx::TileMapRenderer
+// ---------------------------------------------------------------------------------------------
+void TileMapRenderer::draw_level(
+    Instance              &instance,
+    SpriteRenderer        &renderer,
+    const core::LdtkLevel &level,
+    const core::LdtkDefs  &defs)
+{
+	const auto &layersOpt = level.get_layer_instances();
+
+	if (!layersOpt || layersOpt->empty())
+	{
+		return;        // nothing to draw
+	}
+
+	auto &layers = *layersOpt;
+	for (size_t i = 0; i < layers.size(); ++i)
+	{
+		const auto &layer = layers[layers.size() - 1 - i];        // reverse index;
+		if (!layer.get_visible())
+		{
+			continue;        // toggle visible in ldtk to draw
+		}
+
+		draw_layer(instance, renderer, layer, defs);
+	}
+}
+
+void TileMapRenderer::draw_layer(
+    Instance              &instance,
+    SpriteRenderer        &renderer,
+    const core::LdtkLayer &layer,
+    const core::LdtkDefs  &defs)
+{
+	glm::vec2 tileSize = {layer.get_grid_size(), layer.get_grid_size()};
+
+	// draw auto-layer tiles
+	for (const auto &tile : layer.get_auto_layer_tiles())
+	{
+		auto alpha = tile.get_a();
+		if (alpha != 0 || alpha != 1) {
+			WVK_INFO("have transparency {}", alpha);
+		}
+		auto texture = instance.get_texture(layer.get_tileset_rel_path().value_or(""));
+		WVK_ASSERT_MSG(texture != nullptr, "invalid texture!");
+		core::Rectangle rec  = {{WVK_CAST(float, tile.get_src()[0]), WVK_CAST(float, tile.get_src()[1])}, tileSize};
+		int             flip = tile.get_f();
+		if ((flip & 1) == true)
+		{        // x flip
+			rec.x += rec.width;
+			rec.width *= -1.0f;
+		}
+		if ((flip & 2) == true)
+		{        // y flip
+			rec.y += rec.height;
+			rec.height *= -1;
+		}
+		renderer.draw_texture_rec(*texture, rec, glm::vec2{tile.get_px()[0], tile.get_px()[1]});
+	}
+}
 
 ImGuiRenderer::ImGuiRenderer(
     wvk::gfx::Instance &instance,

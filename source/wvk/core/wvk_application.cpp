@@ -53,16 +53,33 @@ void Application::init(const AppConfig& config)
 		exit(EXIT_FAILURE);
 	}
 
+	_instance.init(_window, _app_config.appName.c_str(), _vsync);
+
+	on_init();
+
 	glfwSetKeyCallback(_window, [](GLFWwindow *window, int key, int, int action, int) {
+		// core engine behavior
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, true);
 		}
+
+		if (key == GLFW_KEY_W && action == GLFW_PRESS)
+		{
+		}
+
+		if (key == GLFW_KEY_A && action == GLFW_PRESS)
+		{
+		}
+
+		if (key == GLFW_KEY_S && action == GLFW_PRESS)
+		{
+		}
+
+		if (key == GLFW_KEY_D && action == GLFW_PRESS)
+		{
+		}
 	});
-
-	_instance.init(_window, _app_config.appName.c_str(), _vsync);
-
-	on_init();
 
 	WVK_PROFILER_ZONE_END();
 }
@@ -140,4 +157,5 @@ void Application::run()
 void Application::load_dev_settings(const std::filesystem::path &configPath)
 {
 }
+
 }        // namespace wvk

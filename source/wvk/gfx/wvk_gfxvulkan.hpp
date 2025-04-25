@@ -252,6 +252,12 @@ class WVK_API Texture final
 
 	[[nodiscard]] VkExtent3D extent3d() const { return _extents; }
 
+	[[nodiscard]] glm::vec2 get_size_2d() const { return _size_2d; }
+
+	glm::vec2 get_mutable_size_2d() { return _size_2d; }
+
+	void set_size_2d(const glm::vec2 &size2d) { _size_2d = size2d; }
+
 	[[nodiscard]] bool is_depth() const;
 
 	[[nodiscard]] bool is_stencil() const;
@@ -280,6 +286,7 @@ class WVK_API Texture final
 	VmaAllocationInfo       _allocation_info        = {};
 
 	VkDeviceSize                              _size   = 0;
+	glm::vec2                                 _size_2d{};
 	VkImageCreateFlags                        _flags  = 0;
 	VkImageUsageFlags                         _usage  = 0;
 	VkImageType                               _type   = VK_IMAGE_TYPE_2D;

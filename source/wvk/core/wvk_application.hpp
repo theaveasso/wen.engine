@@ -9,6 +9,9 @@ struct GLFWwindow;
 
 namespace wvk
 {
+
+using UserKeyCallback = std::function<void(GLFWwindow *, int, int, int, int)>;
+
 class WVK_API Application
 {
   public:
@@ -26,7 +29,9 @@ class WVK_API Application
 	};
 
 	void init(const AppConfig& config);
+
 	void run();
+
 	void cleanup();
 
 	virtual void on_init()           = 0;
@@ -35,7 +40,10 @@ class WVK_API Application
 	virtual void on_cleanup()        = 0;
 	virtual void on_window_resize() {};
 
-	inline const AppConfig& get_config() { return _app_config; }
+	void set_user_key_callback(UserKeyCallback cb) { _user_key_callback = cb; }
+
+	const AppConfig &get_config() { return _app_config; }
+
   protected:
 	virtual void load_app_settings() {};
 	virtual void load_dev_settings(const std::filesystem::path &configPath);
@@ -55,6 +63,8 @@ class WVK_API Application
 	bool  _frame_limit = true;
 	float _frame_time  = 0.0f;
 	float _average_fps = 0.0f;
+
+	UserKeyCallback _user_key_callback;
 
   private:
 	void handle_base_dev_input();

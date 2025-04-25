@@ -24,11 +24,20 @@ class HWGame : public wvk::Application
 	VkFormat                           _format = VK_FORMAT_R16G16B16A16_SFLOAT;
 	std::shared_ptr<wvk::gfx::Texture> _draw_image;
 
-	wvk::gfx::SpriteRenderer _sprite_renderer;
+	wvk::gfx::SpriteRenderer  _sprite_renderer;
+	wvk::gfx::TileMapRenderer _tilemap_renderer;
 
 	wvk::core::Camera _game_camera;
 
+	wvk::core::LdtkJson _ldtk_json;
+
   private:
+	void change_level(std::string_view levelName);
+	void do_change_level();
+
+	void on_level_enter();
+	void on_level_exit();
+
 	void draw_world();
 	void draw_game_objects();
 	void draw_ui();

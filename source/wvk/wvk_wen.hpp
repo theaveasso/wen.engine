@@ -13,6 +13,7 @@
 // -------------------------------------------
 #include <wvk/core/wvk_application.hpp>
 #include <wvk/core/wvk_json.hpp>
+#include <wvk/core/wvk_ldtktilemap.hpp>
 
 // -------------------------------------------
 // Graphics

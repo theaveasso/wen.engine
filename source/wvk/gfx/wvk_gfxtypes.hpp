@@ -25,14 +25,6 @@ class Camera;
 namespace wvk
 {
 
-using MeshId     = size_t;
-using TextureId  = uint32_t;
-using MaterialId = uint32_t;
-
-static const size_t NULL_MESH_ID     = std::numeric_limits<size_t>::max();
-static const size_t NULL_TEXTURE_ID  = std::numeric_limits<uint32_t>::max();
-static const size_t NULL_MATERIAL_ID = std::numeric_limits<uint32_t>::max();
-
 static constexpr uint32_t IMGUI_MAX_INDEX_COUNT  = 1000000;
 static constexpr uint32_t IMGUI_MAX_VERTEX_COUNT = 1000000;
 

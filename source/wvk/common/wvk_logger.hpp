@@ -29,7 +29,6 @@
 
 namespace wvk
 {
-
 enum struct LogLevel : int
 {
 	TRACE = WVK_LEVEL_TRACE,
@@ -56,7 +55,6 @@ WVK_API void LoggerFini();
  * @brief retrieves the engine logger instance.
  */
 WVK_API spdlog::logger *LoggerGet();
-
 }        // namespace wvk
 
 /** @brief Logs a trace-level message (very detailed, mostly for development). */

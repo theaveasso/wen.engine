@@ -480,5 +480,7 @@ SpriteRenderingPipeline::PerframeData &SpriteRenderingPipeline::get_current_fram
 {
 	return _frames[frameIndex];
 }
+
 #pragma endregion
+
 }        // namespace wvk::gfx

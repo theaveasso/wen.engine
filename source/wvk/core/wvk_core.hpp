@@ -24,13 +24,21 @@ namespace wvk::core
 {
 
 /**
+ * @brief converts pixel coordinates into UV coordinates by dividing by the size of the texture.
+ */
+inline glm::vec2 pixel_coord_to_uv(const glm::vec2 &pixelCoord, const glm::vec2 &textureSize)
+{
+	return WVK_CAST(glm::vec2, pixelCoord) / WVK_CAST(glm::vec2, textureSize);
+}
+
+/**
  * @brief
  */
 /// ----------------------------------------------------------------------------------------
 /// Image
 /// ----------------------------------------------------------------------------------------
-struct WVK_API ImageData
-{
+
+struct WVK_API ImageData {
 	WVK_MOVABLE_ONLY(ImageData);
 
 	explicit ImageData(std::span<const uint8_t> imageData, bool useFloat = false);

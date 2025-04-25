@@ -33,10 +33,10 @@ struct WVK_API InstanceImpl
 	VmaAllocator           allocator      = VK_NULL_HANDLE;
 	VkFormat               format         = VK_FORMAT_B8G8R8A8_SRGB;
 	VkSurfaceKHR           surface        = VK_NULL_HANDLE;
-	Swapchain             *swapchain;
-	ImmediateCommandQueue *immediateCommandQueue;
-	BindlessSetManager    *bindlessSetManager;
-	ImGuiRenderer         *imguiRenderer;
+	Swapchain             *swapchain{};
+	ImmediateCommandQueue *immediateCommandQueue{};
+	BindlessSetManager    *bindlessSetManager{};
+	ImGuiRenderer         *imguiRenderer{};
 
 	std::array<wvk::FrameData, FRAME_OVERLAP> frames;
 	uint32_t                                  frameNumber = 0;
@@ -64,6 +64,7 @@ struct WVK_API InstanceImpl
 	TextureId whiteTextureId = NULL_TEXTURE_ID;
 	TextureId errorTextureId = NULL_TEXTURE_ID;
 
+	std::unordered_map<std::string, wvk::TextureId> tilesetPathToTextureId;
 	std::vector<std::shared_ptr<Texture>> textures = {};
 	[[nodiscard]] inline TextureId        _get_free_texture_id() const { return WVK_CAST(uint32_t, textures.size()); }
 	TextureId                             _add_texture(TextureId id, const std::shared_ptr<Texture> &texture);

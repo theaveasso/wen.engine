@@ -115,6 +115,26 @@ shared_ptr<Texture> Instance::get_texture(uint32_t index)
 	return _instance_impl->textures[index];
 }
 
+shared_ptr<Texture> Instance::get_texture(std::string_view relPath)
+{
+	auto it = _instance_impl->tilesetPathToTextureId.find(std::string(relPath));
+	if (it != _instance_impl->tilesetPathToTextureId.end())
+	{
+		TextureId textureId = it->second;
+		WVK_ASSERT_MSG(textureId != NULL_TEXTURE_ID, "invalid texture id!");
+		if (textureId < _instance_impl->textures.size())
+		{
+			return _instance_impl->textures[textureId];
+		}
+	}
+	return nullptr;
+}
+
+void Instance::register_tileset_texture(std::string_view relPath, TextureId id)
+{
+	_instance_impl->tilesetPathToTextureId[std::string(relPath)] = id;
+}
+
 TextureId Instance::get_white_texture_id()
 {
 	return _instance_impl->whiteTextureId;
