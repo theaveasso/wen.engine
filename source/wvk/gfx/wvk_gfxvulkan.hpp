@@ -158,8 +158,6 @@ class Buffer final
 {
   public:
 	Buffer() = default;
-
-	explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VkDeviceSize size, VkBufferUsageFlags usage, Buffer *actualBuffer, std::string_view name = "");
 	explicit Buffer(VkDevice device, VmaAllocator vmaAllocator, VmaAllocationCreateInfo *allocationInfo, const VkBufferCreateInfo *bufferInfo, std::string_view name = "");
 
 	void cleanup();
@@ -167,12 +165,11 @@ class Buffer final
 	inline VkBuffer     handle() const { return _handle; }
 	inline VkDeviceSize size() const { return _size; }
 
-	void upload(VkDeviceSize offset = 0) const;
-	void upload(VkDeviceSize offset = 0, VkDeviceSize size = 0) const;
-	void upload_only(VkDevice);
-	void upload_staging_buffer_to_gpu(const VkCommandBuffer &cmd, uint32_t srcOffset = 0, uint32_t dstOffset = 0) const;
+	void upload(VkCommandBuffer cmd, Buffer *gpuBuffer, void *data, VkDeviceSize size, VkDeviceSize offset, bool sync = false) const;
 
 	void copy_data_to_buffer(const void *data, VkDeviceSize size, VkDeviceSize offset = 0) const;
+
+	void *get_mapped_data() { return _mapped_memory; }
 
 	VkDeviceAddress device_address(VkDevice device) const;
 
@@ -231,7 +228,7 @@ class NBuffer final
 class WVK_API Texture final
 {
   public:
-	WVK_MOVABLE_ONLY(Texture)
+	Texture() = default;
 
 	static const auto NULL_BINDLESS_ID = std::numeric_limits<uint32_t>::max();
 

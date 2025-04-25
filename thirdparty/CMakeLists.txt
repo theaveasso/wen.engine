@@ -21,6 +21,9 @@ set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(JSON_MultipleHeaders ON CACHE BOOL "" FORCE)
 set(JSON_Install OFF CACHE BOOL "" FORCE)
 
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
 
 fetch_dep(glfw https://github.com/glfw/glfw.git 3.4)
 fetch_dep(spdlog https://github.com/gabime/spdlog.git v1.x)
@@ -34,6 +37,7 @@ fetch_dep(stb https://github.com/nothings/stb.git f0569113c93ad095470c54bf34a17b
 fetch_dep(nlohmann https://github.com/nlohmann/json.git v3.12.0)
 fetch_dep(fmt https://github.com/fmtlib/fmt.git 11.1.4)
 fetch_dep(tracy https://github.com/wolfpld/tracy.git v0.11.1)
+fetch_dep(tinygltf https://github.com/syoyo/tinygltf.git v2.9.5)
 
 
 add_library(
@@ -50,3 +54,5 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
 add_library(stb INTERFACE ${stb_SOURCE_DIR})
 target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+
+add_library(tinygltf::tinygltf ALIAS tinygltf)

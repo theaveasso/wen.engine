@@ -4,7 +4,7 @@
 #include <VkBootstrap.h>
 #include <backends/imgui_impl_glfw.h>
 #include <imgui.h>
-#include <volk.h>
+#include <stb_image.h>
 
 #include <glm/gtx/string_cast.hpp>
 
@@ -16,6 +16,168 @@
 
 namespace wvk::gfx
 {
+
+// ---------------------------------------------------------------------------------------------
+// gfx::CubeMap
+// ---------------------------------------------------------------------------------------------
+ImageData::~ImageData() {
+    stbi_image_free(pixels);
+}
+
+Texture loadCubeMap(
+    Instance                    &instance,
+    const std::filesystem::path &imageDir)
+{
+	Texture outTexture;
+
+	static const auto paths =
+	    std::array{"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+
+	uint32_t face         = 0;
+	bool     imageCreated = false;
+
+	const std::string label = "cubemap_" + imageDir.string();
+	for (auto &p : paths)
+	{
+		ImageData data;
+		load_image(imageDir / p, &data);
+		WVK_ASSERT_MSG(data.channels == 4,
+		               fmt::format("expected image to have 4 channels (RGBA) but got {}", data.channels));
+
+		if (!imageCreated)
+		{
+			CreateTextureInfo textureInfo = {
+			    .format    = VK_FORMAT_R8G8B8A8_SRGB,
+			    .usage     = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+			    .flags     = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+			    .extent    = {.width = WVK_CAST(uint32_t, data.width), .height = WVK_CAST(uint32_t, data.height), .depth = 1},
+			    .numLayers = 6,
+			    .sampler   = VK_SAMPLE_COUNT_1_BIT,
+			    .tiling    = VK_IMAGE_TILING_OPTIMAL,
+			    .mipMap    = false,
+			    .isCubeMap = true,
+			};
+
+			VmaAllocationCreateInfo memInfo =
+			    init::vma_allocation_create_info();
+
+			imageCreated = true;
+			outTexture   = Texture(
+                instance.get_device(),
+                instance.get_allocator(),
+                textureInfo,
+                memInfo,
+                "cubemap_" + std::string(p) + "_" + imageDir.string());
+		}
+		else
+		{
+			WVK_ASSERT_MSG(outTexture.extent().width == WVK_CAST(uint32_t, data.width) &&
+			                   outTexture.extent().height == WVK_CAST(uint32_t, data.height),
+			               "all images for cubemap must have the same size!");
+		}
+
+//		outTexture.upload_only()
+//		instance.create_texture_w_pixels(
+//		    VK_FORMAT_R8G8B8A8_SRGB,
+//		    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+//		    {.width = WVK_CAST(uint32_t, data.width), .height = WVK_CAST(uint32_t, data.height)},
+//		    data.pixels,
+//		    "cubemap_" + imageDir.string());
+
+//		++face;
+	}
+
+	return outTexture;
+}
+
+void load_image(const std::filesystem::path &path, ImageData *image)
+{
+	image->pixels   = stbi_load(path.string().c_str(), &image->width, &image->height, &image->channels, STBI_rgb_alpha);
+	image->channels = 4;
+	WVK_ASSERT_MSG(image->pixels, "failed to load image, return nullptr from stbi_load");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Material
+// ---------------------------------------------------------------------------------------------
+MaterialCache::MaterialCache(Instance &instance)
+{
+	_materialDataBuffer = instance.create_gpu_buffer(
+	    MAX_MATERIALS * sizeof(MaterialData),
+	    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+
+	uint32_t normal = 0xFFFF8080;        // {0.5, 0.5, 1.0, 1.0}
+
+	_default_normal_map_texture_id = instance.create_texture_w_pixels(
+	    VK_FORMAT_R8G8B8A8_UNORM,
+	    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	    VkExtent2D{1, 1},
+	    &normal,
+	    "default_normal_material");
+
+	const Material placeholderMaterial = {
+	    .name = "BUILTIN_MATERIAL"};
+
+	_placeholder_material_id = add_material(instance, placeholderMaterial);
+}
+
+void MaterialCache::cleanup()
+{
+	_materialDataBuffer.cleanup();
+}
+
+MaterialId MaterialCache::add_material(Instance &instance, Material material)
+{
+	const auto getTextureOrElse =
+	    [](TextureId tid, TextureId placeholder) {
+		    return tid != NULL_TEXTURE_ID ? tid : placeholder;
+	    };
+
+	TextureId whiteTextureId = instance.get_white_texture_id();
+
+	TextureId id = get_free_material_id();
+
+	VkDeviceSize offset = id * sizeof(MaterialData);
+
+	MaterialData data = {
+	    .baseColor              = material.baseColor,
+	    .diffuseTex             = getTextureOrElse(material.diffuseTexture, whiteTextureId),
+	    .normalTex              = getTextureOrElse(material.normalMapTexture, _default_normal_map_texture_id),
+	    .emissiveTex            = getTextureOrElse(material.emissiveTexture, whiteTextureId),
+	    .metallicRoughnessTex   = getTextureOrElse(material.metallicRoughnessTexture, whiteTextureId),
+	    .metalRoughnessEmissive = glm::vec4{material.metallicFactor, material.roughnessFactor, material.emissiveFactor, 0.0f}};
+
+	instance.upload_buffer_to_gpu(&_materialDataBuffer, WVK_CAST(void *, &data), sizeof(MaterialData), offset);
+
+	_materials.push_back(std::move(material));
+	return NULL_MATERIAL_ID;
+}
+
+const Material &MaterialCache::get_material(MaterialId id)
+{
+	return _materials[id];
+}
+
+MaterialId MaterialCache::get_free_material_id() const
+{
+	return _materials.size();
+}
+
+MaterialId MaterialCache::get_placeholder_material_id() const
+{
+	WVK_ASSERT_MSG(_placeholder_material_id != NULL_MATERIAL_ID, "default material placeholder is not available");
+	return _placeholder_material_id;
+}
+
+const Buffer &MaterialCache::get_material_data_buffer() const
+{
+	return _materialDataBuffer;
+}
+
+VkDeviceAddress MaterialCache::get_material_data_buffer_address(VkDevice device) const
+{
+	return _materialDataBuffer.device_address(device);
+}
 
 #pragma region gfx::Sprite
 Sprite::Sprite(const std::shared_ptr<Texture> &texture)

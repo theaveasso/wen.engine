@@ -455,43 +455,9 @@ VkShaderStageFlagBits Shader::stage() const
 	return _stage;
 }
 #pragma endregion
+
 #pragma region gfx::Buffer
-Buffer::Buffer(
-    VkDevice           device,
-    VmaAllocator       vmaAllocator,
-    VkDeviceSize       size,
-    VkBufferUsageFlags usage,
-    Buffer            *actualBuffer,
-    std::string_view   name) :
-    _debug_name("buffer " + std::string(name)),
-    _allocator(vmaAllocator),
-    _size(size),
-    _usages(usage)
-{
-	(void) name;
 
-	const VkBufferCreateInfo bufferInfo =
-	    init::buffer_create_info(
-	        size,
-	        usage);
-
-	_allocation_create_info                = {};
-	_allocation_create_info->usage         = VMA_MEMORY_USAGE_CPU_ONLY;
-	_allocation_create_info->requiredFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-
-	vk_assert(
-	    vmaCreateBuffer(
-	        vmaAllocator,
-	        &bufferInfo,
-	        _allocation_create_info,
-	        &_handle,
-	        &_allocation,
-	        VK_NULL_HANDLE));
-
-	vmaGetAllocationInfo(_allocator, _allocation, &_allocation_info);
-
-	add_debug_w_label(device, _handle, VK_OBJECT_TYPE_BUFFER, _debug_name);
-}
 Buffer::Buffer(
     VkDevice                  device,
     VmaAllocator              vmaAllocator,
@@ -520,6 +486,7 @@ Buffer::Buffer(
 	}
 	add_debug_w_label(device, _handle, VK_OBJECT_TYPE_BUFFER, _debug_name);
 }
+
 void Buffer::cleanup()
 {
 	if (_mapped_memory && (_allocation_create_info->flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0)
@@ -531,34 +498,63 @@ void Buffer::cleanup()
 	}
 	vmaDestroyBuffer(_allocator, _handle, _allocation);
 }
-void Buffer::upload(VkDeviceSize offset) const
-{
-	upload(offset, _size);
-}
-void Buffer::upload(VkDeviceSize offset, VkDeviceSize size) const
-{
-	vk_assert(
-	    vmaFlushAllocation(
-	        _allocator,
-	        _allocation,
-	        offset,
-	        size));
-}
-void Buffer::upload_staging_buffer_to_gpu(
-    VkCommandBuffer const &cmd,
-    uint32_t               srcOffset,
-    uint32_t               dstOffset) const
-{
-	VkBufferCopy region = {};
-	region.size         = _size;
-	region.srcOffset    = srcOffset;
-	region.dstOffset    = dstOffset;
 
-	WVK_ASSERT_MSG(_actual_buffer_if_staging != nullptr, "actual handle if staging can't be null in case of staging");
+void Buffer::upload(
+    VkCommandBuffer cmd,
+    Buffer         *gpuBuffer,
+    void           *data,
+    VkDeviceSize    size,
+    VkDeviceSize    offset,
+    bool            sync) const
+{
+	WVK_ASSERT_MSG(offset + size <= _size, "");
 
-	if (_actual_buffer_if_staging != nullptr)
+	if (_size == 0)
 	{
-		vkCmdCopyBuffer(cmd, handle(), _actual_buffer_if_staging->handle(), 1, &region);
+		return;
+	}
+
+	// sync with previous read
+	if (sync)
+	{
+		const VkBufferMemoryBarrier2 bufferBarrier =
+		    init::buffer_memory_barrier2(
+		        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+		        VK_ACCESS_2_MEMORY_READ_BIT,
+		        VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT,
+		        gpuBuffer->handle());
+
+		const VkDependencyInfo depInfo =
+		    init::dependency_info({}, {&bufferBarrier, 1});
+
+		vkCmdPipelineBarrier2(cmd, &depInfo);
+	}
+
+	copy_data_to_buffer(data, size, offset);
+
+	const VkBufferCopy2 region =
+	    init::buffer_copy2(0, offset, size);
+
+	const VkCopyBufferInfo2 copyBufferInfo2 =
+	    init::copy_buffer_info2(handle(), gpuBuffer->handle(), &region);
+
+	vkCmdCopyBuffer2(cmd, &copyBufferInfo2);
+
+	if (sync)
+	{
+		const VkBufferMemoryBarrier2 bufferBarrier =
+		    init::buffer_memory_barrier2(
+		        VK_PIPELINE_STAGE_2_COPY_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT,
+		        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+		        VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
+		        gpuBuffer->handle());
+
+		const VkDependencyInfo depInfo =
+		    init::dependency_info({}, {&bufferBarrier, 1});
+
+		vkCmdPipelineBarrier2(cmd, &depInfo);
 	}
 }
 
@@ -569,7 +565,8 @@ void Buffer::copy_data_to_buffer(
 {
 	WVK_ASSERT_MSG(size <= _size, "buffer size must be large or equal the size!");
 	WVK_ASSERT_MSG(_mapped_memory != VK_NULL_HANDLE, "buffer memory must be mapped before copying!");
-	memcpy(WVK_CAST(uint8_t*, _mapped_memory) + offset, data, WVK_CAST(size_t, size));
+	auto * mappedData = WVK_RCAST(uint8_t* , _mapped_memory);
+	memcpy(WVK_CAST(void*, &mappedData[offset]) , data, WVK_CAST(size_t, size));
 }
 
 VkDeviceAddress Buffer::device_address(VkDevice device) const
@@ -639,7 +636,7 @@ void NBuffer::upload(
 {
 	WVK_ASSERT_MSG(_is_initialized, "");
 	WVK_ASSERT_MSG(frameIndex < _frames_in_flight, "");
-	WVK_ASSERT_MSG(offset + size <= _gpu_buffer_size, "");
+	WVK_ASSERT_MSG(offset + size <= _gpu_buffer_size, "NBuffer::upload: out of bounds write!");
 
 	if (_gpu_buffer_size == 0)
 	{

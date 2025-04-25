@@ -54,9 +54,9 @@ struct WVK_API InstanceImpl
 
 	void _create_default_texture();
 
-	TextureId _create_texture_w_pixels(VkFormat format, VkImageUsageFlags flags, VkExtent2D extent, const void *data, std::string_view = "");
+	TextureId _create_texture_w_pixels(VkFormat textureFormat, VkImageUsageFlags flags, VkExtent2D extent, const void *data, std::string_view = "");
 
-	Buffer _create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "");
+	Buffer _create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "") const;
 
 	VkCommandBuffer _begin_frame();
 

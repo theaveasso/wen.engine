@@ -50,8 +50,6 @@ class WVK_API Instance final
 
 	[[nodiscard]] Buffer create_gpu_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "") const;
 
-	[[nodiscard]] Buffer create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, Buffer *actualBuffer, std::string_view name = "") const;
-
 	[[nodiscard]] Buffer create_staging_buffer(VkDeviceSize size, VkBufferUsageFlags usages, std::string_view name = "") const;
 
 	[[nodiscard]] NBuffer create_nbuffer(Instance &instance, VkDeviceSize size, VkBufferUsageFlags usages, std::string_view = "") const;
@@ -59,7 +57,7 @@ class WVK_API Instance final
 	[[nodiscard]] VkDeviceAddress get_buffer_address(const Buffer &buffer) const;
 
 	static void destroy_buffer(std::shared_ptr<Buffer> &buffer);
-	void        upload_buffer_to_gpu(VkCommandBuffer cmd, Buffer *gpuBuffer, const void *data, VkDeviceSize totalSize, uint32_t offset) const;
+	void        upload_buffer_to_gpu(Buffer *gpuBuffer,void *data, VkDeviceSize totalSize, uint32_t offset) const;
 
 	VkCommandBuffer begin_frame();
 	void            end_frame(VkCommandBuffer cmd, const std::shared_ptr<Texture> &drawImage, const EndFrameParams &params);

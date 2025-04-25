@@ -22,6 +22,7 @@ class Instance;
 
 namespace wvk::core
 {
+
 /**
  * @brief
  */

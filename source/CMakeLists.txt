@@ -41,6 +41,7 @@ target_link_libraries(${PROJECT_NAME}
         stb
         imgui
         Tracy::TracyClient
+        tinygltf::tinygltf
 
         PRIVATE
         glfw)

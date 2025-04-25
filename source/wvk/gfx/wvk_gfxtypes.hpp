@@ -17,6 +17,11 @@
 #include <glm/vec2.hpp>
 #include <imgui.h>
 
+namespace core
+{
+class Camera;
+}
+
 namespace wvk
 {
 

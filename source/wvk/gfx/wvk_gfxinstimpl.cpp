@@ -16,6 +16,7 @@ void InstanceImpl::_vulkan_init(
 {
 	vk_assert(volkInitialize());
 
+	// initialize vulkan instance
 	instance =
 	    vkb::InstanceBuilder{}
 	        .set_app_name(appName.c_str())
@@ -43,6 +44,7 @@ void InstanceImpl::_vulkan_init(
 		return;
 	}
 
+	// selecting physical device
 	VkPhysicalDeviceVulkan13Features features_1_3 = {};
 	features_1_3.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 	features_1_3.synchronization2                 = VK_TRUE;
@@ -87,6 +89,7 @@ void InstanceImpl::_vulkan_init(
 		throw std::runtime_error("failed to select gpu device.");
 	}
 
+	// initialize vulkan logical device
 	device =
 	    vkb::DeviceBuilder{physicalDevice}
 	        .build()
@@ -97,12 +100,14 @@ void InstanceImpl::_vulkan_init(
 		throw std::runtime_error("failed to create vulkan logical device");
 	}
 
+	// retrieving queue
 	graphicsQueue            = device.get_queue(vkb::QueueType::graphics).value();
 	graphicsFamilyQueueIndex = device.get_queue_index(vkb::QueueType::graphics).value();
 }
 
 void InstanceImpl::_create_vma_allocator()
 {
+	// initialize vma
 	const auto vulkanFunctions = VmaVulkanFunctions{
 	    .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
 	    .vkGetDeviceProcAddr   = vkGetDeviceProcAddr};
@@ -139,14 +144,14 @@ void InstanceImpl::_create_frame_data()
 }
 
 TextureId InstanceImpl::_create_texture_w_pixels(
-    VkFormat          format,
+    VkFormat          textureFormat,
     VkImageUsageFlags flags,
     VkExtent2D        extent,
     const void       *data,
     std::string_view  name)
 {
 	CreateTextureInfo textureInfo = {};
-	textureInfo.format            = format;
+	textureInfo.format            = textureFormat;
 	textureInfo.usage             = flags;
 	textureInfo.extent            = VkExtent3D{extent.width, extent.height, 1};
 
@@ -250,7 +255,7 @@ void InstanceImpl::_destroy_textures()
 Buffer InstanceImpl::_create_staging_buffer(
     VkDeviceSize       size,
     VkBufferUsageFlags usages,
-    std::string_view   name)
+    std::string_view   name) const
 {
 	VmaAllocationCreateInfo memoryCreateInfo =
 	    init::vma_allocation_create_info(

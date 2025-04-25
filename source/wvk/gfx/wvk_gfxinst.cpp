@@ -354,21 +354,6 @@ Buffer Instance::create_gpu_buffer(
 Buffer Instance::create_staging_buffer(
     VkDeviceSize       size,
     VkBufferUsageFlags usages,
-    Buffer            *actualBuffer,
-    std::string_view   name) const
-{
-	return Buffer(
-	    get_device(),
-	    get_allocator(),
-	    size,
-	    usages,
-	    actualBuffer,
-	    name);
-}
-
-Buffer Instance::create_staging_buffer(
-    VkDeviceSize       size,
-    VkBufferUsageFlags usages,
     std::string_view   name) const
 {
 	return _instance_impl->_create_staging_buffer(size, usages, name);
@@ -391,6 +376,25 @@ VkDeviceAddress Instance::get_buffer_address(
 void Instance::destroy_buffer(std::shared_ptr<Buffer> &buffer)
 {
 	buffer->cleanup();
+}
+
+void Instance::upload_buffer_to_gpu(
+    Buffer         *gpuBuffer,
+    void           *data,
+    VkDeviceSize    totalSize,
+    uint32_t        offset) const
+{
+	// 1-
+	Buffer stageBuffer = create_staging_buffer(
+	    totalSize,
+	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+	_instance_impl->immediateCommandQueue->submit(
+	    get_device(), [&](VkCommandBuffer cmd) {
+		    stageBuffer.upload(cmd, gpuBuffer, data, totalSize, offset);
+	    });
+
+	stageBuffer.cleanup();
 }
 
 uint32_t Instance::get_current_frame_index() const

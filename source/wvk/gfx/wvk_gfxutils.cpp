@@ -600,7 +600,7 @@ void PipelineBuilder::clear()
 	_rasterization.rasterizerDiscardEnable = VK_FALSE;
 	_rasterization.polygonMode             = VK_POLYGON_MODE_FILL;
 	_rasterization.lineWidth               = 1.0f;
-	_rasterization.cullMode                = VK_CULL_MODE_BACK_BIT;
+	_rasterization.cullMode                = VK_CULL_MODE_NONE;
 	_rasterization.frontFace               = VK_FRONT_FACE_CLOCKWISE;
 	_rasterization.depthBiasEnable         = VK_FALSE;
 
