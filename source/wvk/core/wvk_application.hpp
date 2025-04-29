@@ -3,14 +3,12 @@
 #include <glm/vec2.hpp>
 
 #include "wvk/common/wvk_pch.hpp"
-#include "wvk/gfx/wvk_gfxinst.hpp"
+#include "wvk/gfx/wvk_inst.gfx.hpp"
 
 struct GLFWwindow;
 
 namespace wvk
 {
-
-using UserKeyCallback = std::function<void(GLFWwindow *, int, int, int, int)>;
 
 class WVK_API Application
 {
@@ -40,8 +38,6 @@ class WVK_API Application
 	virtual void on_cleanup()        = 0;
 	virtual void on_window_resize() {};
 
-	void set_user_key_callback(UserKeyCallback cb) { _user_key_callback = cb; }
-
 	const AppConfig &get_config() { return _app_config; }
 
   protected:
@@ -63,8 +59,6 @@ class WVK_API Application
 	bool  _frame_limit = true;
 	float _frame_time  = 0.0f;
 	float _average_fps = 0.0f;
-
-	UserKeyCallback _user_key_callback;
 
   private:
 	void handle_base_dev_input();

@@ -25,6 +25,11 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
 
+set(FLECS_STATIC ON CACHE BOOL "" FORCE)
+set(FLECS_SHARED ON CACHE BOOL "" FORCE)
+set(FLECS_PIC ON CACHE BOOL "" FORCE)
+set(FLECS_TESTS OFF CACHE BOOL "" FORCE)
+
 fetch_dep(glfw https://github.com/glfw/glfw.git 3.4)
 fetch_dep(spdlog https://github.com/gabime/spdlog.git v1.x)
 fetch_dep(vkb https://github.com/charles-lunarg/vk-bootstrap main)
@@ -38,7 +43,7 @@ fetch_dep(nlohmann https://github.com/nlohmann/json.git v3.12.0)
 fetch_dep(fmt https://github.com/fmtlib/fmt.git 11.1.4)
 fetch_dep(tracy https://github.com/wolfpld/tracy.git v0.11.1)
 fetch_dep(tinygltf https://github.com/syoyo/tinygltf.git v2.9.5)
-
+fetch_dep(flecs https://github.com/SanderMertens/flecs.git v4.0.5)
 
 add_library(
         imgui STATIC

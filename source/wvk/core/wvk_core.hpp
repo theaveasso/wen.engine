@@ -13,7 +13,7 @@
 #include <stb_image.h>
 
 #include "wvk/core/wvk_math.hpp"
-#include "wvk/gfx/wvk_gfxtypes.hpp"
+#include "wvk/gfx/wvk_types.gfx.hpp"
 
 namespace wvk::gfx
 {

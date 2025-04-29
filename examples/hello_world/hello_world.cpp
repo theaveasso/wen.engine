@@ -1,8 +1,8 @@
 #include <wvk/wvk_entry.hpp>
 
-#include "hw_game.hpp"
+#include "game.h"
 
-wvk::Application* CreateApplication()
+wvk::Application *CreateApplication()
 {
 	return new HWGame;
 }

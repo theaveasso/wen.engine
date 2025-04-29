@@ -2,6 +2,9 @@
 
 #include "wvk_logger.hpp"
 
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
 /**
  * @brief Helper macro to perform a static_cast in a consistent, readable way.
  * @param T The target type.
@@ -97,6 +100,9 @@
 using std::make_shared;
 using std::shared_ptr;
 
+using std::make_unique;
+using std::unique_ptr;
+
 namespace wvk
 {
 using TextureId                         = uint32_t;
@@ -107,5 +113,24 @@ static constexpr size_t NULL_MESH_ID = std::numeric_limits<size_t>::max();
 
 using MaterialId                         = uint32_t;
 static constexpr size_t NULL_MATERIAL_ID = std::numeric_limits<uint32_t>::max();
+
+using LightId                         = uint32_t;
+static constexpr size_t NULL_LIGHT_ID = std::numeric_limits<uint32_t>::max();
+
+static const auto NULL_BINDLESS_ID = std::numeric_limits<uint32_t>::max();
+
+static constexpr int NUM_SHADOW_CASCADES = 3;
+
+using ColorRGBA = glm::vec4;
+using ColorRGB  = glm::vec3;
+
+constexpr ColorRGBA WHITE = ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
+constexpr ColorRGBA BLACK = ColorRGBA(0.0f, 0.0f, 0.0f, 1.0f);
+
+#define WVK_CSM_SHADOW_CASCADE_COUNT 3
+#define WVK_MAX_LIGHT_COUNT 100
+#define WVK_POINT_LIGHT_MAX_RANGE 25.f
+#define WVK_SPOT_LIGHT_MAX_RANGE 64.f
+#define WVK_SUN_LIGHT_INDEX -1
 
 }        // namespace wvk

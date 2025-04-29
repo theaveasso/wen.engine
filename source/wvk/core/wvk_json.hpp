@@ -5,7 +5,7 @@
 #include "wvk/common/wvk_pch.hpp"
 #include "wvk/common/wvk_defines.hpp"
 
-#include "wvk_ldtktilemap.hpp"
+#include "wvk_ldtk.hpp"
 
 #ifndef WVK_JSON_ADAPTERS_HPP
 #define WVK_JSON_ADAPTERS_HPP

@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}
         Tracy::TracyClient
         tinygltf::tinygltf
 
-        PRIVATE
+        flecs
         glfw)
 
 #engine

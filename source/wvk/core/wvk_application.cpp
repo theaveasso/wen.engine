@@ -6,6 +6,7 @@
 
 namespace wvk
 {
+
 void Application::init(const AppConfig& config)
 {
 	WVK_PROFILER_ZONE("Application Initialization", WVK_PROFILER_COLOR_CREATE);
@@ -62,22 +63,6 @@ void Application::init(const AppConfig& config)
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, true);
-		}
-
-		if (key == GLFW_KEY_W && action == GLFW_PRESS)
-		{
-		}
-
-		if (key == GLFW_KEY_A && action == GLFW_PRESS)
-		{
-		}
-
-		if (key == GLFW_KEY_S && action == GLFW_PRESS)
-		{
-		}
-
-		if (key == GLFW_KEY_D && action == GLFW_PRESS)
-		{
 		}
 	});
 
@@ -157,5 +142,4 @@ void Application::run()
 void Application::load_dev_settings(const std::filesystem::path &configPath)
 {
 }
-
 }        // namespace wvk

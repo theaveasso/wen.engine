@@ -8,13 +8,14 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#include "wvk_gfxinst.hpp"
-#include "wvk_gfxinstimpl.hpp"
-#include "wvk_gfxtypes.hpp"
-#include "wvk_gfxvkinit.hpp"
-#include "wvk_gfxvulkan.hpp"
+#include "wvk_init.gfx.hpp"
+#include "wvk_inst.gfx.hpp"
+#include "wvk_instimpl.gfx.hpp"
+#include "wvk_types.gfx.hpp"
+#include "wvk_vulkan.gfx.hpp"
 
-#include "wvk/core/wvk_ldtktilemap.hpp"
+#include "wvk/core/wvk_gltf.hpp"
+#include "wvk/core/wvk_ldtk.hpp"
 
 namespace wvk::gfx
 {
@@ -26,16 +27,16 @@ ImageData::~ImageData() {
     stbi_image_free(pixels);
 }
 
-Texture loadCubeMap(
+shared_ptr<Texture> loadCubeMap(
     Instance                    &instance,
     const std::filesystem::path &imageDir)
 {
-	Texture outTexture;
+	shared_ptr<Texture> outTexture;
 
 	static const auto paths =
 	    std::array{"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
 
-	uint32_t face         = 0;
+	//	uint32_t face         = 0;
 	bool     imageCreated = false;
 
 	const std::string label = "cubemap_" + imageDir.string();
@@ -50,10 +51,10 @@ Texture loadCubeMap(
 		{
 			CreateTextureInfo textureInfo = {
 			    .format    = VK_FORMAT_R8G8B8A8_SRGB,
-			    .usage     = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+			    .usages         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
 			    .flags     = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
 			    .extent    = {.width = WVK_CAST(uint32_t, data.width), .height = WVK_CAST(uint32_t, data.height), .depth = 1},
-			    .numLayers = 6,
+			    .baseArrayLayer = 6,
 			    .sampler   = VK_SAMPLE_COUNT_1_BIT,
 			    .tiling    = VK_IMAGE_TILING_OPTIMAL,
 			    .mipMap    = false,
@@ -64,7 +65,7 @@ Texture loadCubeMap(
 			    init::vma_allocation_create_info();
 
 			imageCreated = true;
-			outTexture   = Texture(
+			outTexture   = make_shared<Texture>(
                 instance.get_device(),
                 instance.get_allocator(),
                 textureInfo,
@@ -73,20 +74,10 @@ Texture loadCubeMap(
 		}
 		else
 		{
-			WVK_ASSERT_MSG(outTexture.extent().width == WVK_CAST(uint32_t, data.width) &&
-			                   outTexture.extent().height == WVK_CAST(uint32_t, data.height),
+			WVK_ASSERT_MSG(outTexture->get_extent_2d().width == WVK_CAST(uint32_t, data.width) &&
+			                   outTexture->get_extent_2d().height == WVK_CAST(uint32_t, data.height),
 			               "all images for cubemap must have the same size!");
 		}
-
-//		outTexture.upload_only()
-//		instance.create_texture_w_pixels(
-//		    VK_FORMAT_R8G8B8A8_SRGB,
-//		    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-//		    {.width = WVK_CAST(uint32_t, data.width), .height = WVK_CAST(uint32_t, data.height)},
-//		    data.pixels,
-//		    "cubemap_" + imageDir.string());
-
-//		++face;
 	}
 
 	return outTexture;
@@ -102,15 +93,17 @@ void load_image(const std::filesystem::path &path, ImageData *image)
 // ---------------------------------------------------------------------------------------------
 // Material
 // ---------------------------------------------------------------------------------------------
-MaterialCache::MaterialCache(Instance &instance)
+
+MaterialCache::MaterialCache(
+    Instance &instance)
 {
-	_materialDataBuffer = instance.create_gpu_buffer(
+	_materialDataBuffer = instance.make_gpu_buffer(
 	    MAX_MATERIALS * sizeof(MaterialData),
-	    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+	    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
 	uint32_t normal = 0xFFFF8080;        // {0.5, 0.5, 1.0, 1.0}
 
-	_default_normal_map_texture_id = instance.create_texture_w_pixels(
+	_default_normal_map_texture_id = instance.make_texture_w_pixels(
 	    VK_FORMAT_R8G8B8A8_UNORM,
 	    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
 	    VkExtent2D{1, 1},
@@ -125,7 +118,7 @@ MaterialCache::MaterialCache(Instance &instance)
 
 void MaterialCache::cleanup()
 {
-	_materialDataBuffer.cleanup();
+	_materialDataBuffer->cleanup();
 }
 
 MaterialId MaterialCache::add_material(Instance &instance, Material material)
@@ -141,28 +134,21 @@ MaterialId MaterialCache::add_material(Instance &instance, Material material)
 
 	VkDeviceSize offset = id * sizeof(MaterialData);
 
-	MaterialData data = {
-	    .baseColor              = material.baseColor,
-	    .diffuseTex             = getTextureOrElse(material.diffuseTexture, whiteTextureId),
-	    .normalTex              = getTextureOrElse(material.normalMapTexture, _default_normal_map_texture_id),
-	    .emissiveTex            = getTextureOrElse(material.emissiveTexture, whiteTextureId),
-	    .metallicRoughnessTex   = getTextureOrElse(material.metallicRoughnessTexture, whiteTextureId),
-	    .metalRoughnessEmissive = glm::vec4{material.metallicFactor, material.roughnessFactor, material.emissiveFactor, 0.0f}};
+	MaterialData data           = {};
+	data.baseColor              = material.baseColor;
+	data.diffuseTex             = getTextureOrElse(material.diffuseTexture, whiteTextureId);
+	data.normalTex              = getTextureOrElse(material.normalMapTexture, _default_normal_map_texture_id);
+	data.emissiveTex            = getTextureOrElse(material.emissiveTexture, whiteTextureId);
+	data.metallicRoughnessTex   = getTextureOrElse(material.metallicRoughnessTexture, whiteTextureId);
+	data.metalRoughnessEmissive = glm::vec4(material.metallicFactor, material.roughnessFactor, material.emissiveFactor, 0.0f);
 
-	instance.upload_buffer_to_gpu(&_materialDataBuffer, WVK_CAST(void *, &data), sizeof(MaterialData), offset);
+	instance.upload_buffer_to_gpu(
+	    _materialDataBuffer,
+	    WVK_CAST(void *, &data),
+	    sizeof(MaterialData), offset);
 
 	_materials.push_back(std::move(material));
-	return NULL_MATERIAL_ID;
-}
-
-const Material &MaterialCache::get_material(MaterialId id)
-{
-	return _materials[id];
-}
-
-MaterialId MaterialCache::get_free_material_id() const
-{
-	return _materials.size();
+	return id;
 }
 
 MaterialId MaterialCache::get_placeholder_material_id() const
@@ -171,14 +157,9 @@ MaterialId MaterialCache::get_placeholder_material_id() const
 	return _placeholder_material_id;
 }
 
-const Buffer &MaterialCache::get_material_data_buffer() const
-{
-	return _materialDataBuffer;
-}
-
 VkDeviceAddress MaterialCache::get_material_data_buffer_address(VkDevice device) const
 {
-	return _materialDataBuffer.device_address(device);
+	return _materialDataBuffer->get_device_address(device);
 }
 
 #pragma region gfx::Sprite
@@ -189,7 +170,7 @@ Sprite::Sprite(const std::shared_ptr<Texture> &texture)
 void Sprite::set_texture(const std::shared_ptr<Texture> &t)
 {
 	texture_id   = t->get_bindless_id();
-	texture_size = glm::vec2{t->extent().width, t->extent().height};
+	texture_size = t->get_size_2d();
 }
 
 void Sprite::set_texture_size(glm::vec2 size)
@@ -202,7 +183,7 @@ void Sprite::set_texture_rect(const core::Rectangle &)
 }
 void Sprite::set_pivot_pixel(const glm::ivec2 &pixel)
 {
-	WVK_ASSERT_MSG(texture_id != Texture::NULL_BINDLESS_ID, "");
+	WVK_ASSERT_MSG(texture_id != NULL_BINDLESS_ID, "");
 	pivot = WVK_CAST(glm::vec2, pixel) / texture_size;
 }
 #pragma endregion
@@ -214,17 +195,19 @@ void Sprite::set_pivot_pixel(const glm::ivec2 &pixel)
 
 void SpriteRenderer::init(
     Instance        &instance,
-    VkFormat         drawImageFormat,
+    VkFormat         drawTextureFormat,
     std::string_view name)
 {
 	_sprite_draw_commands.reserve(MAX_SPRITES);
-	_drawing_pipeline.init(instance, drawImageFormat, MAX_SPRITES, name);
+
+	_drawing_pipeline = SpriteRenderingPipeline(instance, drawTextureFormat, MAX_SPRITES, name);
+
 	_is_initialized = true;
 }
 
 void SpriteRenderer::cleanup(Instance &instance)
 {
-	_drawing_pipeline.cleanup(instance.get_device());
+	_drawing_pipeline.cleanup(instance);
 }
 
 void SpriteRenderer::begin_draw()
@@ -239,19 +222,19 @@ void SpriteRenderer::end_draw()
 }
 
 void SpriteRenderer::draw(
-    VkCommandBuffer                 cmd,
-    Instance                       &instance,
-    const std::shared_ptr<Texture> &drawImage)
+    VkCommandBuffer           &cmd,
+    Instance                  &instance,
+    const shared_ptr<Texture> &drawImage)
 {
 	core::Camera uiCamera;
 	draw(cmd, instance, drawImage, uiCamera.get_view_proj());
 }
 
 void SpriteRenderer::draw(
-    VkCommandBuffer                 cmd,
-    Instance                       &instance,
-    const std::shared_ptr<Texture> &drawImage,
-    const glm::mat4                 viewProjection)
+    VkCommandBuffer           &cmd,
+    Instance                  &instance,
+    const shared_ptr<Texture> &drawImage,
+    const glm::mat4           &viewProjection)
 {
 	_drawing_pipeline.draw(
 	    cmd,
@@ -299,14 +282,7 @@ void SpriteRenderer::draw_sprite(
     const glm::mat4 &transform,
     uint32_t         shaderId)
 {
-	WVK_ASSERT_MSG(sprite.texture_id != Texture::NULL_BINDLESS_ID, "sprite texture invalid!");
-
-	// debug draw
-	//	WVK_INFO("SPRITE UV0 {}", glm::to_string(sprite.uv0));
-	//	WVK_INFO("SPRITE UV1 {}", glm::to_string(sprite.uv1));
-	//	WVK_INFO("SPRITE texture size {}", glm::to_string(sprite.texture_size));
-	//	WVK_INFO("SPRITE transform matrix {}", glm::to_string(transformMatrix));
-	// debug draw
+	WVK_ASSERT_MSG(sprite.texture_id != NULL_BINDLESS_ID, "sprite texture invalid!");
 
 	_sprite_draw_commands.push_back(
 	    SpriteDrawCommand{
@@ -383,42 +359,43 @@ void SpriteRenderer::draw_rectangle_pro(
 }
 
 void SpriteRenderer::draw_texture(
-    Texture         &textureId,
+    shared_ptr<Texture> texture,
     int              posX,
     int              posY,
     const ColorRGBA &tint)
 {
-	draw_texture_v(textureId, glm::vec2{posX, posY}, tint);
+	draw_texture_v(texture, glm::vec2{posX, posY}, tint);
 }
+
 void SpriteRenderer::draw_texture_v(
-    Texture         &texture,
+    shared_ptr<Texture> texture,
     glm::vec2        position,
     const ColorRGBA &tint)
 {
-	Sprite    sprite    = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	Sprite    sprite    = make_sprite(texture->get_bindless_id(), texture->get_size_2d(), tint);
 	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
 	draw_sprite(sprite, transform);
 }
 void SpriteRenderer::draw_texture_ex(
-    Texture         &texture,
+    shared_ptr<Texture> texture,
     glm::vec2        position,
     float            rotation,
     float            scale,
     const ColorRGBA &tint)
 {
-	Sprite    sprite    = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	Sprite    sprite    = make_sprite(texture->get_bindless_id(), texture->get_size_2d(), tint);
 	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
 	transform           = glm::rotate(transform, rotation, glm::vec3(0, 0, 1));
 	transform           = glm::scale(transform, glm::vec3(scale));
 	draw_sprite(sprite, transform);
 }
 void SpriteRenderer::draw_texture_rec(
-    Texture               &texture,
+    shared_ptr<Texture>    texture,
     const core::Rectangle &source,
     glm::vec2              position,
     const ColorRGBA       &tint)
 {
-	Sprite sprite       = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	Sprite sprite       = make_sprite(texture->get_bindless_id(), texture->get_size_2d(), tint);
 	sprite.uv0          = core::pixel_coord_to_uv(glm::vec2(source.x, source.y), sprite.texture_size);
 	sprite.uv1          = core::pixel_coord_to_uv(glm::vec2(source.x + source.width, source.y + source.height), sprite.texture_size);
 	glm::mat4 transform = glm::translate(glm::mat4(1.0), glm::vec3(position, 0.0f));
@@ -426,14 +403,14 @@ void SpriteRenderer::draw_texture_rec(
 	draw_sprite(sprite, transform);
 }
 void SpriteRenderer::draw_texture_pro(
-    Texture               &texture,
+    shared_ptr<Texture>    texture,
     const core::Rectangle &source,
     const core::Rectangle &dest,
     glm::vec2              origin,
     float                  rotation,
     const ColorRGBA       &tint)
 {
-	Sprite sprite       = make_sprite(texture.get_bindless_id(), texture.get_size_2d(), tint);
+	Sprite sprite       = make_sprite(texture->get_bindless_id(), texture->get_size_2d(), tint);
 	sprite.uv0          = core::pixel_coord_to_uv(glm::vec2(source.x, source.y), sprite.texture_size);
 	sprite.uv1          = core::pixel_coord_to_uv(glm::vec2(source.x + source.width, source.y + source.height), sprite.texture_size);
 	sprite.pivot        = origin;
@@ -451,8 +428,7 @@ void SpriteRenderer::draw_texture_pro(
 void TileMapRenderer::draw_level(
     Instance              &instance,
     SpriteRenderer        &renderer,
-    const core::LdtkLevel &level,
-    const core::LdtkDefs  &defs)
+    const core::LdtkLevel &level)
 {
 	const auto &layersOpt = level.get_layer_instances();
 
@@ -470,57 +446,45 @@ void TileMapRenderer::draw_level(
 			continue;        // toggle visible in ldtk to draw
 		}
 
-		draw_layer(instance, renderer, layer, defs);
+		draw_layer(instance, renderer, layer);
 	}
 }
 
 void TileMapRenderer::draw_layer(
     Instance              &instance,
     SpriteRenderer        &renderer,
-    const core::LdtkLayer &layer,
-    const core::LdtkDefs  &defs)
+    const core::LdtkLayer &layer)
 {
 	glm::vec2 tileSize = {layer.get_grid_size(), layer.get_grid_size()};
 
 	// draw auto-layer tiles
 	for (const auto &tile : layer.get_auto_layer_tiles())
 	{
-		auto alpha = tile.get_a();
-		if (alpha != 0 || alpha != 1) {
-			WVK_INFO("have transparency {}", alpha);
-		}
 		auto texture = instance.get_texture(layer.get_tileset_rel_path().value_or(""));
 		WVK_ASSERT_MSG(texture != nullptr, "invalid texture!");
 		core::Rectangle rec  = {{WVK_CAST(float, tile.get_src()[0]), WVK_CAST(float, tile.get_src()[1])}, tileSize};
-		int             flip = tile.get_f();
-		if ((flip & 1) == true)
-		{        // x flip
+
+		auto flip = tile.get_f();
+
+		if (flip & 1)
+		{
 			rec.x += rec.width;
 			rec.width *= -1.0f;
 		}
-		if ((flip & 2) == true)
-		{        // y flip
+		if (flip & 2)
+		{
 			rec.y += rec.height;
 			rec.height *= -1;
 		}
-		renderer.draw_texture_rec(*texture, rec, glm::vec2{tile.get_px()[0], tile.get_px()[1]});
+		renderer.draw_texture_rec(texture, rec, glm::vec2{tile.get_px()[0], tile.get_px()[1]});
 	}
 }
 
-ImGuiRenderer::ImGuiRenderer(
+UIOverlay::UIOverlay(
     wvk::gfx::Instance &instance,
     GLFWwindow         *window,
     VkFormat            drawImageFormat,
     std::string_view    name)
-{
-	_init(instance, window, drawImageFormat, name);
-}
-
-void ImGuiRenderer::_init(
-    Instance        &instance,
-    GLFWwindow      *window,
-    VkFormat         drawImageFormat,
-    std::string_view name)
 {
 	WVK_ASSERT_MSG(!_is_initialized, "imgui renderer was already initialized!");
 
@@ -534,15 +498,18 @@ void ImGuiRenderer::_init(
 	io.BackendRendererName = "WEN ImGui";
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
-	_drawing_pipeline.init(instance, drawImageFormat, name);
+	_drawing_pipeline = UIOverlayPipeline(instance, drawImageFormat, name);
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 	_is_initialized = true;
 }
 
-void ImGuiRenderer::cleanup(
-    VkDevice device)
+void UIOverlay::cleanup(
+    Instance &instance)
 {
 	WVK_ASSERT_MSG(_is_initialized, "imgui renderer was not initialized!");
+
+	auto device = instance.get_device();
+
 	_drawing_pipeline.cleanup(device);
 	ImGui::SetCurrentContext(_context);
 
@@ -551,7 +518,7 @@ void ImGuiRenderer::cleanup(
 	_context = nullptr;
 }
 
-void ImGuiRenderer::begin_draw()
+void UIOverlay::begin_draw()
 {
 	WVK_ASSERT_MSG(_is_initialized, "imgui renderer was not initialized!");
 	ImGui::SetCurrentContext(_context);
@@ -559,17 +526,16 @@ void ImGuiRenderer::begin_draw()
 	ImGui::NewFrame();
 }
 
-void ImGuiRenderer::end_draw()
+void UIOverlay::end_draw()
 {
 	WVK_ASSERT_MSG(_is_initialized, "imgui renderer was not initialized!");
-	WVK_ASSERT_MSG(sizeof(ImDrawIdx) == 2, "the constants below may not work with the ImGui data!");
 
 	ImGui::SetCurrentContext(_context);
 	ImGui::EndFrame();
 	ImGui::Render();
 }
 
-void ImGuiRenderer::draw(
+void UIOverlay::draw(
     VkCommandBuffer cmd,
     Instance       &instance,
     VkImageView     view,
@@ -580,4 +546,33 @@ void ImGuiRenderer::draw(
 	ImGui::SetCurrentContext(_context);
 	_drawing_pipeline.draw(cmd, instance, view, extent);
 }
+
+MeshCache::MeshCache(
+    Instance &instance)
+{
+}
+
+void MeshCache::cleanup()
+{
+}
+
+MeshId MeshCache::add_mesh(
+    Instance &instance,
+    CPUMesh  &mesh)
+{
+	return 0;
+}
+
+const GPUMesh &MeshCache::get_gpu_mesh(MeshId id)
+{
+	return _meshes[id];
+}
+
+void MeshCache::upload_mesh(
+    Instance                  &instance,
+    const shared_ptr<CPUMesh> &cpuMesh,
+    const shared_ptr<GPUMesh> &gpuMesh) const
+{
+}
+
 }        // namespace wvk::gfx
