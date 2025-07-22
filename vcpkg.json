@@ -1,0 +1,20 @@
+{
+  "name": "wen-engine",
+  "version": "0.0.1",
+  "dependencies": [
+    {
+      "name": "sdl3",
+      "features": [
+        "vulkan"
+      ]
+    },
+    {
+      "name": "sdl3-image",
+      "features": [
+        "jpeg",
+        "png"
+      ]
+    },
+    "sdl3-ttf"
+  ]
+}
