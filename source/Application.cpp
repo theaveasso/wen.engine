@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Wen_Utils.h"
 
 #include <array>
 
@@ -13,15 +14,17 @@ auto Application::Init() -> SDL_AppResult
 
 	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
-	window.reset(SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY));
+	window.reset(SDL_CreateWindow(
+    title.c_str(), 
+    width, 
+    height,
+    window_flags));
 	if (!window)
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 #ifdef DEBUG
@@ -35,14 +38,12 @@ auto Application::Init() -> SDL_AppResult
 	gpuDevice.reset(SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, true, nullptr));
 	if (!gpuDevice)
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateGPUDevice: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 	if (!SDL_ClaimWindowForGPUDevice(gpuDevice.get(), window.get()))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_ClaimWindowForGPUDevice: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 	if (SDL_WindowSupportsGPUPresentMode(gpuDevice.get(), window.get(), SDL_GPU_PRESENTMODE_MAILBOX))
@@ -52,14 +53,12 @@ auto Application::Init() -> SDL_AppResult
 
 	if (!SDL_SetGPUSwapchainParameters(gpuDevice.get(), window.get(), SDL_GPU_SWAPCHAINCOMPOSITION_SDR, presentMode))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetSwapchainParameters: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 	if (!SDL_ShowWindow(window.get()))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_ShowWindow: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 	return SDL_APP_CONTINUE;
@@ -127,8 +126,7 @@ auto Application::OnDraw() const -> SDL_AppResult
 	SDL_GPUTexture *swapchainTexture;
 	if (!SDL_AcquireGPUSwapchainTexture(cmd, window.get(), &swapchainTexture, nullptr, nullptr))
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_AcquireGPUSwapchainTexture: %s\n", SDL_GetError());
-		return SDL_APP_FAILURE;
+    SDL_Fail();
 	}
 
 	if (swapchainTexture)
@@ -150,8 +148,7 @@ auto Application::OnDraw() const -> SDL_AppResult
 
 		if (!SDL_SubmitGPUCommandBuffer(cmd))
 		{
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SubmitGPUCommandBuffer: %s\n", SDL_GetError());
-			return SDL_APP_FAILURE;
+      SDL_Fail();
 		}
 	}
 

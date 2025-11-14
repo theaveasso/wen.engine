@@ -1,5 +1,4 @@
-#ifndef APPLICATION_H
-#define APPLICATION_H
+#pragma once
 
 #include <SDL3/SDL.h>
 #include <string>
@@ -18,7 +17,14 @@ public:
 
 private:
 	std::string title;
+
 	int width, height;
+ 
+  SDL_WindowFlags window_flags = 
+    SDL_WINDOW_HIDDEN |
+    SDL_WINDOW_HIGH_PIXEL_DENSITY |
+    SDL_WINDOW_RESIZABLE |
+    SDL_WINDOW_ALWAYS_ON_TOP;
 
 	std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window;
 	std::unique_ptr<SDL_GPUDevice, decltype(&SDL_DestroyGPUDevice)> gpuDevice;
@@ -31,5 +37,3 @@ private:
 
 	[[nodiscard]] auto OnUpdate() const -> SDL_AppResult;
 };
-
-#endif //APPLICATION_H
