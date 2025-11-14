@@ -4,8 +4,13 @@
     {
       "name": "vcpkg",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
+        "CMAKE_C_COMPILER": "C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "CMAKE_CXX_COMPILER": "C:\\Program Files\\LLVM\\bin\\clang++.exe",
+        "CMAKE_MAKE_PROGRAM": "C:\\Users\\NITRO 5\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Ninja-build.Ninja_Microsoft.Winget.Source_8wekyb3d8bbwe\\ninja.exe",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_TOOLCHAIN_FILE": "./vcpkg/scripts/buildsystems/vcpkg.cmake"
       }
     }

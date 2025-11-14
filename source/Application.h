@@ -2,7 +2,7 @@
 #define APPLICATION_H
 
 #include <SDL3/SDL.h>
-#include <xstring>
+#include <string>
 #include <memory>
 
 class Application {
@@ -26,10 +26,10 @@ private:
 	SDL_GPUPresentMode presentMode = SDL_GPU_PRESENTMODE_VSYNC;
 
 	[[nodiscard]] auto OnQuit() const -> SDL_AppResult;
+
 	[[nodiscard]] auto OnDraw() const -> SDL_AppResult;
+
 	[[nodiscard]] auto OnUpdate() const -> SDL_AppResult;
 };
-
-
 
 #endif //APPLICATION_H

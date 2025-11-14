@@ -1,3 +1,9 @@
 
-.idea
-vcpkg
+.idea/
+.cache/
+vcpkg/
+
+build/
+
+CMakePresets.json
+compile_commands.json
