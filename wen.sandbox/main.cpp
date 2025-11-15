@@ -1,7 +1,12 @@
-#include "Wen/Wen_Core.h"
 #include <Wen/Wen.h>
 
 int main() {
-    WEN_INFO("Hello Sandbox!!!!!");
+    auto app = Wen_Engine();
+    WEN_TRACE("{} Sandbox", "Trace");
+    WEN_DEBUG("{} Sandbox", "Debug");
+    WEN_INFO("{} Sandbox", "Info");
+    WEN_WARN("{} Sandbox", "Warn");
+    WEN_ERROR("{} Sandbox", "Error");
+    WEN_FATAL("{} Sandbox", "Fatal");
     return 0;
 }
