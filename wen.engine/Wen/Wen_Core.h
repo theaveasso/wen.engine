@@ -63,35 +63,17 @@ struct WEN_API Wen_Logger {
 
 
 #ifdef WEN_ENABLE_LOGGING
-#define WEN_TRACE(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->trace(__VA_ARGS__); \
-    }
-#define WEN_DEBUG(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->debug(__VA_ARGS__); \
-    }
-#define WEN_INFO(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->info(__VA_ARGS__); \
-    }
-#define WEN_WARN(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->warn(__VA_ARGS__); \
-    }
-#define WEN_ERROR(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->error(__VA_ARGS__); \
-    }
-#define WEN_FATAL(...) \
-    if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { \
-        logger->critical(__VA_ARGS__); \
-    }
+#define WEN_TRACE(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->trace(__VA_ARGS__); }
+#define WEN_DEBUG(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->debug(__VA_ARGS__); }
+#define WEN_INFO(...)   if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->info(__VA_ARGS__); }
+#define WEN_WARN(...)   if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->warn(__VA_ARGS__); }
+#define WEN_ERROR(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->error(__VA_ARGS__); }
+#define WEN_FATAL(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->critical(__VA_ARGS__); }
 #else
-#define WEN_TRACE(...) (void)0
-#define WEN_WARN(...) (void)0
-#define WEN_DEBUG(...) (void)0
-#define WEN_INFO(...) (void)0
-#define WEN_ERROR(...) (void)0
-#define WEN_FATAL(...) (void)0
+#define WEN_TRACE(...)  (void)0
+#define WEN_WARN(...)   (void)0
+#define WEN_DEBUG(...)  (void)0
+#define WEN_INFO(...)   (void)0
+#define WEN_ERROR(...)  (void)0
+#define WEN_FATAL(...)  (void)0
 #endif
