@@ -5,6 +5,9 @@
 #include <vector>
 #include <string>
 #include <typeindex>
+#include <stdexcept>
+#include <algorithm>
+#include <type_traits>
 
 #define SPDLOG_USE_STD_FORMAT 1
 #undef SPDLOG_FMT_EXTERNAL
