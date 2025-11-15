@@ -1,0 +1,11 @@
+[
+  {
+    "label": "linux-debug",
+    "command": "${ZED_WORKTREE_ROOT}/bootstrap-wen.sh",
+    "args": ["Debug"]
+  },
+  {
+    "label": "build and run sandbox",
+    "command": "./build/Debug/Debug/WenSandbox"
+  }
+]

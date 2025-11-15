@@ -1,0 +1,12 @@
+[
+  {
+    "label": "Debug WenSandbox",
+    "build": {
+      "command": "${ZED_WORKTREE_ROOT}/bootstrap-wen.sh",
+      "args": ["Debug"]
+    },
+    "program": "$ZED_WORKTREE_ROOT/build/Debug/Debug/WenSandbox",
+    "request": "launch",
+    "adapter": "CodeLLDB"
+  }
+]

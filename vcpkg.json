@@ -3,13 +3,11 @@
   "version": "0.0.1",
   "dependencies": [
     "sdl3",
-    "sdl3-ttf",
     {
       "name": "sdl3-image",
-      "features": [
-        "jpeg",
-        "png"
-      ]
-    }
+      "features": ["jpeg", "png"]
+    },
+    "sdl3-ttf",
+    "spdlog"
   ]
 }
