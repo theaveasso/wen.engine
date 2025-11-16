@@ -5,9 +5,13 @@
 #include <vector>
 #include <string>
 #include <typeindex>
+#include <queue>
 #include <stdexcept>
 #include <algorithm>
 #include <type_traits>
+#include <functional>
+#include <cstdint>
+#include <unordered_map>
 
 #define SPDLOG_USE_STD_FORMAT 1
 #undef SPDLOG_FMT_EXTERNAL

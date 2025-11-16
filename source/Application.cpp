@@ -18,8 +18,8 @@ auto Application::Init() -> SDL_AppResult
 	}
 
 	window.reset(SDL_CreateWindow(
-    title.c_str(), 
-    width, 
+    title.c_str(),
+    width,
     height,
     window_flags));
 	if (!window)
@@ -160,4 +160,3 @@ SDL_AppResult Application::OnQuit() const
 	SDL_WaitForGPUIdle(gpuDevice.get());
 	return SDL_APP_SUCCESS;
 }
-
