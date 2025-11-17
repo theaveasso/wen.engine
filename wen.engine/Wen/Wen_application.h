@@ -2,7 +2,6 @@
 
 #include "Wen_context.h"
 #include "Wen_core.h"
-#include <memory>
 
 class WEN_API Application {
   public:

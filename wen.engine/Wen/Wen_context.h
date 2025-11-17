@@ -2,7 +2,6 @@
 
 #include "Wen_pch.h"
 #include "Wen_interface.h"
-#include <memory>
 
 struct WEN_API AppContext {
   FORCE_INLINE AppContext() = default;
