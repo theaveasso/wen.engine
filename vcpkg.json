@@ -2,11 +2,14 @@
   "name": "wen-engine",
   "version": "0.0.1",
   "dependencies": [
+    {
+      "name": "glad",
+      "features": [
+        "gl-api-46"
+      ]
+    },
     "sdl3",
     "spdlog",
-    {
-      "name": "glad", 
-      "features": ["gl-api-46"]
-    }
+    "glm"
   ]
 }

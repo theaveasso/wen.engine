@@ -14,12 +14,12 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DWEN_ENABLE_LOGGING)
 endif()
 
-find_package(glad CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(SDL3 CONFIG REQUIRED)
+add_subdirectory(wen.engine)
+add_subdirectory(wen.sandbox)
+# find_package(glad CONFIG REQUIRED)
+# find_package(spdlog CONFIG REQUIRED)
+# find_package(SDL3 CONFIG REQUIRED)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+# add_executable(${PROJECT_NAME} src/main.cpp)
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE src/Wen_pch.h)
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-SDL3::SDL3 spdlog::spdlog glad::glad)
+# target_link_libraries(${PROJECT_NAME} PRIVATE WenEngine)

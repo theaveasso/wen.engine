@@ -7,6 +7,20 @@
 #define NO_INLINE __attribute__((noinline))
 #endif
 
+#if defined (_WIN32) || defined(_WIN64)
+#ifdef WEN_EXPORTS
+#define WEN_API __declspec(dllexport)
+#else
+#define WEN_API __declspec(dllimport)
+#endif
+#else
+#ifdef WEN_EXPORTS
+#define WEN_API __attribute__((visibility("default")))
+#else
+#define WEN_API
+#endif
+#endif
+
 #define SPDLOG_USE_STD_FORMAT 1
 #undef  SPDLOG_FMT_EXTERNAL
 #undef  SPDLOG_COMPILED_LIB
