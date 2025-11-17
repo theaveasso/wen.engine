@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Core.h"
+#include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_video.h>
-#include <memory>
-#include <string>
 #include <glad/glad.h>
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
+#include <memory>
+
+#include "Wen_core.h"
 
 class Application {
   public:
@@ -20,29 +20,31 @@ class Application {
     m_logger.init();
   }
 
-  FORCE_INLINE ~Application() = default;
+  FORCE_INLINE ~Application() {
+    app_quit();
+  };
 
   FORCE_INLINE SDL_AppResult app_init() {
-    if (!SDL_Init(SDL_INIT_VIDEO)) sdl_fail();
+    if (!SDL_Init(SDL_INIT_VIDEO)) return sdl_fail();
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     m_window.reset(SDL_CreateWindow(m_title.c_str(), m_width, m_height, m_window_flags));
-    if (!m_window.get()) sdl_fail();
+    if (!m_window.get()) return sdl_fail();
 
-    SDL_GLContext m_glcontext = SDL_GL_CreateContext(m_window.get());
-    if (!m_glcontext) sdl_fail();
-    SDL_GL_MakeCurrent(m_window.get(), m_glcontext);
+    m_context = SDL_GL_CreateContext(m_window.get());
+    if (!m_context) return sdl_fail();
+    SDL_GL_MakeCurrent(m_window.get(), m_context);
 
-    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) sdl_fail();
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) return sdl_fail();
     WEN_INFO("OpenGL Version: {}.{}", GLVersion.major, GLVersion.minor);
     WEN_INFO("OpenGL Shading Language Version: {}", (char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
     WEN_INFO("OpenGL Vendor: {}", (char *)glGetString(GL_VENDOR));
     WEN_INFO("OpenGL Renderer: {}", (char *)glGetString(GL_RENDERER));
 
-    if (!SDL_ShowWindow(m_window.get())) sdl_fail();
+    if (!SDL_ShowWindow(m_window.get())) return sdl_fail();
 
     return SDL_APP_CONTINUE;
   }
@@ -74,6 +76,8 @@ class Application {
   }
 
   FORCE_INLINE void app_quit() {
+    if (m_context) SDL_GL_DestroyContext(m_context);
+    m_window.reset();
     SDL_Quit(); 
   }
 
@@ -93,5 +97,6 @@ class Application {
 
   Logger m_logger;
 
+  SDL_GLContext m_context;
   std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;
 };

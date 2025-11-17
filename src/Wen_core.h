@@ -1,7 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <memory>
+#include "Wen_pch.h"
 
 #if defined (__clang__) || defined (__gcc__)
 #define FORCE_INLINE __attribute__((always_inline)) inline

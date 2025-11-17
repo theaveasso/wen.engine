@@ -1,9 +1,8 @@
-#include "Core.h"
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include "App.h"
+#include "Wen_application.h"
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   auto app = new Application();
@@ -28,8 +27,5 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  if (auto app = reinterpret_cast<Application*>(appstate)) {
-    app->app_quit();
-    delete app;
-  }
+  delete reinterpret_cast<Application*>(appstate);
 }
