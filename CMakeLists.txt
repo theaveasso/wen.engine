@@ -15,11 +15,5 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_subdirectory(wen.engine)
+add_subdirectory(wen.editor)
 add_subdirectory(wen.sandbox)
-# find_package(glad CONFIG REQUIRED)
-# find_package(spdlog CONFIG REQUIRED)
-# find_package(SDL3 CONFIG REQUIRED)
-
-# add_executable(${PROJECT_NAME} src/main.cpp)
-
-# target_link_libraries(${PROJECT_NAME} PRIVATE WenEngine)
