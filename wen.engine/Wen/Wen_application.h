@@ -1,14 +1,19 @@
 #pragma once
 
+#include "Wen_context.h"
 #include "Wen_core.h"
+#include <memory>
 
 class WEN_API Application {
   public:
   FORCE_INLINE Application(): Application("Wen.Engine", 800, 600) {}
 
-  FORCE_INLINE Application(const std::string& title, int width, int height): 
-   m_title(std::move(title)), m_width(width), m_height(height),
-   m_window(nullptr, &SDL_DestroyWindow)
+  FORCE_INLINE Application(std::string title, int width, int height): 
+   m_title(std::move(title)),
+   m_width(width),
+   m_height(height),
+   m_window(nullptr, &SDL_DestroyWindow),
+   m_context(std::make_unique<AppContext>())
   {
     m_logger.init();
   }
@@ -27,9 +32,9 @@ class WEN_API Application {
     m_window.reset(SDL_CreateWindow(m_title.c_str(), m_width, m_height, m_window_flags));
     if (!m_window.get()) return sdl_fail();
 
-    m_context = SDL_GL_CreateContext(m_window.get());
-    if (!m_context) return sdl_fail();
-    SDL_GL_MakeCurrent(m_window.get(), m_context);
+    m_gl_context = SDL_GL_CreateContext(m_window.get());
+    if (!m_gl_context) return sdl_fail();
+    SDL_GL_MakeCurrent(m_window.get(), m_gl_context);
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) return sdl_fail();
     WEN_INFO("OpenGL Version: {}.{}", GLVersion.major, GLVersion.minor);
@@ -69,7 +74,7 @@ class WEN_API Application {
   }
 
   FORCE_INLINE void app_quit() {
-    if (m_context) SDL_GL_DestroyContext(m_context);
+    if (m_gl_context) SDL_GL_DestroyContext(m_gl_context);
     m_window.reset();
     SDL_Quit(); 
   }
@@ -89,7 +94,8 @@ class WEN_API Application {
   SDL_WindowFlags m_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
 
   Logger m_logger;
+  std::unique_ptr<AppContext> m_context;
 
-  SDL_GLContext m_context;
+  SDL_GLContext m_gl_context;
   std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;
 };

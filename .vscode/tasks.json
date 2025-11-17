@@ -14,13 +14,6 @@
       "command": "configure",
       "problemMatcher": [],
       "detail": "CMake template configure task"
-    },
-    {
-      "type": "cmake",
-      "label": "CMake: configure",
-      "command": "configure",
-      "problemMatcher": [],
-      "detail": "CMake template configure task"
     }
   ]
 }
