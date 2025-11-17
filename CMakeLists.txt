@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(Wen.Engine)
+project(Wen.Engine LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
@@ -14,18 +14,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DWEN_ENABLE_LOGGING)
 endif()
 
-ADD_SUBDIRECTORY(wen.engine)
-ADD_SUBDIRECTORY(wen.sandbox)
+find_package(glad CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
-# find_package(SDL3       CONFIG REQUIRED)
-# find_package(SDL3_image CONFIG REQUIRED)
-# find_package(SDL3_ttf   CONFIG REQUIRED)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
-# add_executable(${PROJECT_NAME}
-#   source/main.cpp
-#   source/Application.cpp)
-
-# target_link_libraries(${PROJECT_NAME} PRIVATE
-#   SDL3::SDL3
-#   $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
-#   SDL3_ttf::SDL3_ttf)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+SDL3::SDL3 spdlog::spdlog glad::glad)

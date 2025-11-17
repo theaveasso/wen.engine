@@ -1,0 +1,60 @@
+#pragma once
+
+#include <vector>
+#include <memory>
+
+#if defined (__clang__) || defined (__gcc__)
+#define FORCE_INLINE __attribute__((always_inline)) inline
+#define NO_INLINE __attribute__((noinline))
+#endif
+
+#define SPDLOG_USE_STD_FORMAT 1
+#undef  SPDLOG_FMT_EXTERNAL
+#undef  SPDLOG_COMPILED_LIB
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+#define WEN_DEFAULT_LOGGER_NAME "Wen"
+
+struct Logger {
+ FORCE_INLINE Logger() = default;
+
+ FORCE_INLINE void init() {
+  auto console_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+  console_sink->set_pattern("%^%T [WEN-%l]: [#%t] %v%$");
+
+  auto sinks = std::vector<spdlog::sink_ptr> {
+    console_sink
+  };
+  auto logger = std::make_shared<spdlog::logger>(
+    WEN_DEFAULT_LOGGER_NAME,
+    sinks.begin(),
+    sinks.end()
+  );
+  logger->set_level(spdlog::level::trace);
+  logger->flush_on(spdlog::level::trace);
+
+  spdlog::register_logger(logger);
+ }
+
+ FORCE_INLINE ~Logger() {
+  spdlog::shutdown();
+ }
+};
+
+#ifdef WEN_ENABLE_LOGGING
+#define WEN_TRACE(...) if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->trace(__VA_ARGS__); }
+#define WEN_DEBUG(...) if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->debug(__VA_ARGS__);  }
+#define WEN_INFO(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->info(__VA_ARGS__); }
+#define WEN_WARN(...)  if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->warn(__VA_ARGS__); }
+#define WEN_ERROR(...) if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->error(__VA_ARGS__); }
+#define WEN_FATAL(...) if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->critical(__VA_ARGS__); }
+#else
+#define WEN_TRACE(...) (void) 0
+#define WEN_DEBUG(...) (void) 0
+#define WEN_INFO(...) (void) 0
+#define WEN_WARN(...)  (void) 0
+#define WEN_ERROR(...) (void) 0
+#define WEN_FATAL(...) (void) 0
+#endif

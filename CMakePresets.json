@@ -2,29 +2,61 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "vcpkg",
+      "name": "vcpkg-base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "linux-base",
+      "inherits": "vcpkg-base",
+      "hidden": true,
+      "cacheVariables": {
         "CMAKE_C_COMPILER": "/usr/bin/clang",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
         "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_TOOLCHAIN_FILE": "./vcpkg/scripts/buildsystems/vcpkg.cmake"
       }
     },
     {
-      "name": "Debug",
-      "inherits": "vcpkg",
+      "name": "windows-base",
+      "inherits": "vcpkg-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "C:\\Program Files\\LLVM\\bin\\clang.exe",
+        "CMAKE_CXX_COMPILER": "C:\\Program Files\\LLVM\\bin\\clang++.exe",
+        "CMAKE_MAKE_PROGRAM": "C:\\Users\\NITRO 5\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Ninja-build.Ninja_Microsoft.Winget.Source_8wekyb3d8bbwe\\ninja.exe",
+        "CMAKE_TOOLCHAIN_FILE": "./vcpkg/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "Linux Debug",
+      "inherits": "linux-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "Release",
-      "inherits": "vcpkg",
+      "name": "Linux Release",
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "Windows Debug",
+      "inherits": "windows-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "Windows Release",
+      "inherits": "windows-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -33,12 +65,20 @@
 
   "buildPresets": [
     {
-      "name": "Debug",
-      "configurePreset": "Debug"
+      "name": "linux-debug",
+      "configurePreset": "Linux Debug"
     },
     {
-      "name": "Release",
-      "configurePreset": "Release"
+      "name": "linux-release",
+      "configurePreset": "Linux Release"
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "Windows Debug"
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "Windows Release"
     }
   ]
 }

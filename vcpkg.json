@@ -3,11 +3,10 @@
   "version": "0.0.1",
   "dependencies": [
     "sdl3",
+    "spdlog",
     {
-      "name": "sdl3-image",
-      "features": ["jpeg", "png"]
-    },
-    "sdl3-ttf",
-    "spdlog"
+      "name": "glad", 
+      "features": ["gl-api-46"]
+    }
   ]
 }
