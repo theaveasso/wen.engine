@@ -48,6 +48,14 @@ class WEN_API Application {
   }
 
   FORCE_INLINE SDL_AppResult app_iterate() {
+    for (auto& layer: m_context->layers) {
+      auto l = layer.get();
+      l->on_update(0);
+    }
+    for (auto& layer: m_context->layers) {
+      auto l = layer.get();
+      l->on_draw();
+    }
     glClearColor(0.1f, 0.15f, 0.3f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -78,6 +86,9 @@ class WEN_API Application {
     m_window.reset();
     SDL_Quit(); 
   }
+  
+  protected:
+  std::unique_ptr<AppContext> m_context;
 
   private: 
   FORCE_INLINE SDL_AppResult sdl_fail() {
@@ -94,7 +105,6 @@ class WEN_API Application {
   SDL_WindowFlags m_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN;
 
   Logger m_logger;
-  std::unique_ptr<AppContext> m_context;
 
   SDL_GLContext m_gl_context;
   std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;

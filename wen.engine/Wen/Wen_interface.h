@@ -7,7 +7,6 @@ class WEN_API AppInterface {
   FORCE_INLINE AppInterface() = default;
   FORCE_INLINE virtual ~AppInterface() = default;
 
-  protected:
   virtual void on_update(float deltatime) = 0;
   virtual void on_draw() = 0;
 
