@@ -1,7 +1,7 @@
 #include "Wen/Wen_application.h"
 #include <Wen_entry.h>
 
-class TestLayer: public AppInterface {
+struct TestLayer: public AppInterface {
   public:
   virtual void on_update(float deltatime) override {
     WEN_INFO("test layer on update");

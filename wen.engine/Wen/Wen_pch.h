@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <typeindex>
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Wen_core.h"
+#include "Wen_pch.h"
 
-class WEN_API AppInterface {
-  public:
+struct WEN_API AppInterface {
   FORCE_INLINE AppInterface() = default;
   FORCE_INLINE virtual ~AppInterface() = default;
 
@@ -12,4 +11,6 @@ class WEN_API AppInterface {
 
   virtual void on_init() {};
   virtual void on_deleted() {};
+
+  uint32_t layer_id;
 };

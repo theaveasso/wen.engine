@@ -3,6 +3,8 @@
 #if defined (__clang__) || defined (__gcc__)
 #define FORCE_INLINE __attribute__((always_inline)) inline
 #define NO_INLINE __attribute__((noinline))
+
+#define STATIC_ASSERT _Static_assert
 #endif
 
 #if defined (_WIN32) || defined(_WIN64)
@@ -53,6 +55,11 @@ struct Logger {
   spdlog::shutdown();
  }
 };
+
+template<typename T>
+FORCE_INLINE uint32_t WEN_TYPEID() {
+  return static_cast<uint32_t>(std::type_index(typeid(T)).hash_code());
+}
 
 #ifdef WEN_ENABLE_LOGGING
 #define WEN_TRACE(...) if (auto logger = spdlog::get(WEN_DEFAULT_LOGGER_NAME)) { logger->trace(__VA_ARGS__); }
